@@ -17,7 +17,7 @@ import {
 } from 'firebase/firestore';
 import { useFirestore, useUser, useCollection, useDoc } from '@/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
 export type Difficulty = "beginner" | "intermediate" | "advanced";
 
@@ -110,21 +110,32 @@ export function useGameStore() {
 
   const updateStats = useCallback((updates: Partial<UserStats>) => {
     if (!statsRef) return;
-    setDoc(statsRef, updates, { merge: true }).catch(async () => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: statsRef.path,
-        operation: 'update',
-        requestResourceData: updates
-      }));
-    });
+    
+    setDoc(statsRef, updates, { merge: true })
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: statsRef.path,
+          operation: 'update',
+          requestResourceData: updates
+        } satisfies SecurityRuleContext));
+      });
 
     // Mirror progress to the classroom if active
     if (classProgressRef && (updates.stars || updates.wordsMastered)) {
-      setDoc(classProgressRef, {
-        stars: increment(updates.stars ? (typeof updates.stars === 'number' ? updates.stars : 1) : 0),
-        wordsMastered: increment(updates.wordsMastered ? 1 : 0),
+      const classUpdates = {
+        stars: updates.stars ? increment(typeof updates.stars === 'number' ? updates.stars : 1) : increment(0),
+        wordsMastered: updates.wordsMastered ? increment(1) : increment(0),
         pupilName: user?.displayName || "Pupil"
-      }, { merge: true });
+      };
+      
+      setDoc(classProgressRef, classUpdates, { merge: true })
+        .catch(async () => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: classProgressRef.path,
+            operation: 'update',
+            requestResourceData: classUpdates
+          } satisfies SecurityRuleContext));
+        });
     }
   }, [statsRef, classProgressRef, user?.displayName]);
 
@@ -141,18 +152,42 @@ export function useGameStore() {
     if (snapshot.empty) return false;
     
     const classDoc = snapshot.docs[0];
-    await setDoc(statsRef, { activeClassId: classDoc.id }, { merge: true });
+    
+    setDoc(statsRef, { activeClassId: classDoc.id }, { merge: true })
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: statsRef.path,
+          operation: 'update',
+          requestResourceData: { activeClassId: classDoc.id }
+        } satisfies SecurityRuleContext));
+      });
     
     // Create initial pupil record in the class
     const pRef = doc(db, 'classrooms', classDoc.id, 'pupils', user.uid);
-    await setDoc(pRef, { pupilName: user.displayName, stars: 0, wordsMastered: 0 }, { merge: true });
+    const pupilData = { pupilName: user.displayName, stars: 0, wordsMastered: 0 };
+    
+    setDoc(pRef, pupilData, { merge: true })
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: pRef.path,
+          operation: 'write',
+          requestResourceData: pupilData
+        } satisfies SecurityRuleContext));
+      });
     
     return true;
   }, [db, user, statsRef]);
 
   const leaveClass = useCallback(() => {
     if (!statsRef) return;
-    setDoc(statsRef, { activeClassId: null }, { merge: true });
+    setDoc(statsRef, { activeClassId: null }, { merge: true })
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: statsRef.path,
+          operation: 'update',
+          requestResourceData: { activeClassId: null }
+        } satisfies SecurityRuleContext));
+      });
   }, [statsRef]);
 
   const isLoaded = !userLoading && !wordsLoading && (!user || !statsLoading);

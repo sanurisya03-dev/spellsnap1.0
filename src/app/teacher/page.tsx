@@ -15,13 +15,14 @@ import {
   Check, 
   X,
   Copy,
-  LayoutDashboard
+  LayoutDashboard,
+  LogIn
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useGameStore, Classroom, PupilProgress, WordItem } from "@/lib/game-store";
-import { useUser, useFirestore, useCollection } from "@/firebase";
+import { useUser, useFirestore, useCollection, useAuth } from "@/firebase";
 import { collection, doc, setDoc, query, where, addDoc } from "firebase/firestore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -35,18 +36,32 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 export default function TeacherDashboard() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const { allWords, isLoaded } = useGameStore();
   const db = useFirestore();
+  const auth = useAuth();
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState("classes");
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newClassName, setNewClassName] = useState("");
+
+  const handleSignIn = async () => {
+    if (!auth) return;
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Sign in failed:", error);
+    }
+  };
 
   // Fetch Teacher's Classes
   const classQuery = useMemo(() => {
@@ -67,8 +82,9 @@ export default function TeacherDashboard() {
   }, [db, selectedClassId]);
   const { data: pupils } = useCollection<PupilProgress>(pupilQuery);
 
-  const handleCreateClass = async () => {
+  const handleCreateClass = () => {
     if (!db || !user?.uid || !newClassName) return;
+    
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
     const data = {
       name: newClassName,
@@ -77,20 +93,43 @@ export default function TeacherDashboard() {
       assignedWordIds: [],
       createdAt: new Date().toISOString()
     };
-    await addDoc(collection(db, 'classrooms'), data);
+
+    const classroomRef = collection(db, 'classrooms');
+    
+    addDoc(classroomRef, data)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: classroomRef.path,
+          operation: 'create',
+          requestResourceData: data,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
+
     setNewClassName("");
     setIsCreateOpen(false);
     toast({ title: "Class Created!", description: `The join code is ${code}` });
   };
 
-  const toggleWordAssignment = async (wordId: string) => {
+  const toggleWordAssignment = (wordId: string) => {
     if (!db || !selectedClass) return;
+    
     const current = selectedClass.assignedWordIds || [];
     const next = current.includes(wordId) 
       ? current.filter(id => id !== wordId)
       : [...current, wordId];
     
-    await setDoc(doc(db, 'classrooms', selectedClass.id), { assignedWordIds: next }, { merge: true });
+    const docRef = doc(db, 'classrooms', selectedClass.id);
+    
+    setDoc(docRef, { assignedWordIds: next }, { merge: true })
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'update',
+          requestResourceData: { assignedWordIds: next },
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
   };
 
   const copyCode = (code: string) => {
@@ -98,10 +137,30 @@ export default function TeacherDashboard() {
     toast({ title: "Code Copied!", description: "Share this with your pupils." });
   };
 
-  if (!isLoaded || classesLoading) {
+  if (!isLoaded || classesLoading || userLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center space-y-8">
+        <div className="bg-primary/10 p-12 rounded-[4rem] border-8 border-white shadow-3xl">
+          <Settings className="h-24 w-24 text-primary mx-auto mb-6" />
+          <h1 className="text-4xl font-black mb-4">Teacher Access</h1>
+          <p className="text-xl text-muted-foreground max-w-md mx-auto mb-8">
+            Please sign in with your teacher account to manage classrooms and assignments.
+          </p>
+          <Button onClick={handleSignIn} className="btn-bouncy px-12 py-8 text-2xl bg-primary text-white">
+            <LogIn className="mr-3 h-6 w-6" /> Teacher Login
+          </Button>
+        </div>
+        <Button variant="ghost" onClick={() => router.push("/")} className="text-muted-foreground font-bold">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Lobby
+        </Button>
       </div>
     );
   }
@@ -127,19 +186,26 @@ export default function TeacherDashboard() {
               <Plus className="mr-2 h-5 w-5" /> Create New Class
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="rounded-[3rem]">
             <DialogHeader>
-              <DialogTitle>New Classroom</DialogTitle>
+              <DialogTitle className="text-2xl font-black">New Classroom</DialogTitle>
               <DialogDescription>Create a space for your pupils to learn.</DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
               <div className="space-y-2">
-                <Label>Class Name</Label>
-                <Input placeholder="e.g., Year 3 Blue" value={newClassName} onChange={(e) => setNewClassName(e.target.value)} />
+                <Label className="font-bold">Class Name</Label>
+                <Input 
+                  placeholder="e.g., Year 3 Blue" 
+                  value={newClassName} 
+                  onChange={(e) => setNewClassName(e.target.value)} 
+                  className="rounded-xl border-2 h-12"
+                />
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleCreateClass} className="w-full">Create Class</Button>
+              <Button onClick={handleCreateClass} className="w-full bg-primary hover:bg-primary/90 h-14 rounded-2xl font-black text-lg">
+                Create Class
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -70,6 +70,7 @@ export function useGameStore() {
 
   const allWords = useMemo(() => {
     const custom = firebaseWords || [];
+    // Memoize to avoid unnecessary re-renders in effects
     return [...DEFAULT_WORDS, ...custom];
   }, [firebaseWords]);
 

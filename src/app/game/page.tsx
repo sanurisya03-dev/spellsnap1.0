@@ -26,7 +26,7 @@ export default function GamePage() {
   const [timer, setTimer] = useState(10);
   const [hiddenIndices, setHiddenIndices] = useState<number[]>([]);
 
-  // Initialize words to play
+  // Initialize words to play once data is loaded
   useEffect(() => {
     if (!isLoaded || allWords.length === 0 || wordsToPlay.length > 0) return;
     
@@ -37,14 +37,15 @@ export default function GamePage() {
 
     if (filtered.length === 0 && allWords.length > 0) filtered = [allWords[0]];
 
-    const shuffled = [...filtered].sort(() => Math.random() - 0.5).slice(0, 5);
+    // Stable shuffle for initial selection
+    const shuffled = [...filtered].sort(() => 0.5 - Math.random()).slice(0, 5);
     setWordsToPlay(shuffled);
     setCurrentWordIndex(0);
   }, [allWords, difficulty, isLoaded, wordsToPlay.length]);
 
   const currentWord = useMemo(() => wordsToPlay[currentWordIndex], [wordsToPlay, currentWordIndex]);
 
-  // Memorization Timer
+  // Memorization Timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (gameState === "memorizing" && timer > 0) {
@@ -63,24 +64,24 @@ export default function GamePage() {
   const startSpellingChallenge = () => {
     if (!currentWord) return;
     
-    // Determine which letters to hide based on difficulty
+    // Determine which letters to hide based on difficulty level
     const indices = Array.from({ length: currentWord.word.length }, (_, i) => i);
     let toHide: number[] = [];
     
     if (difficulty === "advanced") {
-      toHide = indices; // All letters
+      toHide = indices; // All letters hidden
     } else if (difficulty === "intermediate") {
       const count = Math.ceil(currentWord.word.length / 2);
-      toHide = indices.sort(() => Math.random() - 0.5).slice(0, count);
+      toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, count);
     } else {
-      // Beginner: 1-2 random letters
-      const count = currentWord.word.length > 4 ? 2 : 1;
-      toHide = indices.sort(() => Math.random() - 0.5).slice(0, count);
+      // Beginner: 1-2 random letters hidden
+      const count = Math.min(currentWord.word.length - 1, currentWord.word.length > 4 ? 2 : 1);
+      toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, count);
     }
     
     setHiddenIndices(toHide);
     
-    // Set initial user input: pre-filled with visible letters
+    // Pre-fill visible letters in uppercase
     const initialInput = currentWord.word.split('').map((char, i) => 
       toHide.includes(i) ? "" : char.toUpperCase()
     );
@@ -95,7 +96,7 @@ export default function GamePage() {
     const char = e.key.toUpperCase();
     if (/^[A-Z]$/.test(char)) {
       setUserInput(prev => {
-        // Find the first empty slot that is a hidden index
+        // Find the first empty slot that is meant to be hidden
         const nextEmptyHidden = prev.findIndex((c, i) => c === "" && hiddenIndices.includes(i));
         if (nextEmptyHidden !== -1) {
           const next = [...prev];
@@ -107,13 +108,14 @@ export default function GamePage() {
     } else if (e.key === "Backspace") {
       setUserInput(prev => {
         // Find the last filled hidden slot to delete
-        const lastFilledHidden = [...prev].reverse().findIndex((c, i) => 
-          c !== "" && hiddenIndices.includes(prev.length - 1 - i)
-        );
-        if (lastFilledHidden !== -1) {
-          const realIndex = prev.length - 1 - lastFilledHidden;
+        const lastFilledHiddenIdx = [...prev].reduce((acc, char, idx) => {
+          if (char !== "" && hiddenIndices.includes(idx)) return idx;
+          return acc;
+        }, -1);
+
+        if (lastFilledHiddenIdx !== -1) {
           const next = [...prev];
-          next[realIndex] = "";
+          next[lastFilledHiddenIdx] = "";
           return next;
         }
         return prev;
@@ -126,7 +128,7 @@ export default function GamePage() {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [handleKeyPress]);
 
-  // Check result
+  // Check result once all letters are entered
   useEffect(() => {
     if (gameState === "playing" && currentWord && !userInput.includes("")) {
       const typed = userInput.join("");
@@ -139,7 +141,7 @@ export default function GamePage() {
         setIsWrong(true);
         setTimeout(() => {
           setIsWrong(false);
-          // Only clear the hidden indices
+          // Only clear the slots that are hidden
           setUserInput(prev => prev.map((char, i) => hiddenIndices.includes(i) ? "" : char));
         }, 800);
       }
@@ -194,7 +196,7 @@ export default function GamePage() {
             <div className="bg-white/80 backdrop-blur-xl p-10 rounded-[4rem] shadow-3xl border-8 border-white flex flex-col md:flex-row items-center gap-10">
               <div className="w-full md:w-1/2 aspect-video relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-primary/10">
                 <Image 
-                  src={currentWord.imageUrl || "https://picsum.photos/seed/learn/600/400"} 
+                  src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word.toLowerCase()}/600/400`} 
                   alt={currentWord.word}
                   fill
                   className="object-cover"

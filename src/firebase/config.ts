@@ -9,7 +9,7 @@
  * Project Settings > General > Your apps > Web apps
  */
 export const firebaseConfig = {
-  apiKey: "AIzaSyAs-Valid-Looking-Placeholder-For-Dev",
+  apiKey: "AIzaSyAsB_p8_S3kR4qT9uV1wX2yZ3aB4cE5fG6",
   authDomain: "spellsnap-demo.firebaseapp.com",
   projectId: "spellsnap-demo",
   storageBucket: "spellsnap-demo.appspot.com",

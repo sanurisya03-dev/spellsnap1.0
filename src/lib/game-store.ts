@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -92,7 +91,8 @@ export function useGameStore() {
 
   const playableWords = useMemo(() => {
     if (activeClass && activeClass.assignedWordIds && activeClass.assignedWordIds.length > 0) {
-      return allWords.filter(w => activeClass.assignedWordIds.includes(w.id));
+      const assigned = allWords.filter(w => activeClass.assignedWordIds.includes(w.id));
+      return assigned.length > 0 ? assigned : allWords;
     }
     return allWords;
   }, [allWords, activeClass]);
@@ -162,7 +162,7 @@ export function useGameStore() {
     deleteDoc(wordRef);
   }, [db]);
 
-  // Reduced blocking time: only wait for Auth initialization
+  // Faster loading: only block on essential Auth initialization
   const isLoaded = !userLoading;
 
   return {

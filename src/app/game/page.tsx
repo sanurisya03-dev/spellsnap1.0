@@ -30,10 +30,7 @@ export default function GamePage() {
     if (!isLoaded || playableWords.length === 0 || wordsToPlay.length > 0) return;
     
     let filtered = playableWords.filter(w => w.difficulty === difficulty);
-    // Fallback if no words match specific difficulty
-    if (filtered.length === 0) {
-        filtered = playableWords;
-    }
+    if (filtered.length === 0) filtered = playableWords;
 
     const shuffled = [...filtered].sort(() => 0.5 - Math.random()).slice(0, 5);
     setWordsToPlay(shuffled);
@@ -41,7 +38,6 @@ export default function GamePage() {
 
   const currentWord = useMemo(() => wordsToPlay[currentWordIndex], [wordsToPlay, currentWordIndex]);
 
-  // Memorization Timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (gameState === "memorizing" && timer > 0) {
@@ -63,9 +59,8 @@ export default function GamePage() {
     const indices = Array.from({ length: currentWord.word.length }, (_, i) => i);
     let toHide: number[] = [];
     
-    // Logic for hiding letters based on difficulty
     if (difficulty === "advanced") {
-      toHide = indices; // Hide all
+      toHide = indices;
     } else if (difficulty === "intermediate") {
       const count = Math.ceil(currentWord.word.length / 2);
       toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, count);
@@ -178,11 +173,11 @@ export default function GamePage() {
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col items-center justify-center z-10 w-full max-w-6xl mx-auto">
+      <div className="flex-1 flex flex-col items-center justify-center z-10 w-full max-w-6xl mx-auto overflow-hidden">
         {gameState === "intro" && currentWord && (
           <div className="w-full max-w-4xl text-center space-y-6 md:space-y-10 animate-in fade-in zoom-in duration-500 px-4">
             <div className="bg-white/80 backdrop-blur-xl p-6 md:p-10 rounded-[2rem] md:rounded-[4rem] shadow-3xl border-4 md:border-8 border-white flex flex-col md:flex-row items-center gap-6 md:gap-10">
-              <div className="w-full md:w-1/2 aspect-square relative rounded-[1.5rem] md:rounded-[3rem] overflow-hidden shadow-2xl border-4 border-primary/10 bg-muted">
+              <div className="w-full md:w-1/2 aspect-square relative rounded-[1.5rem] md:rounded-[3rem] overflow-hidden shadow-2xl border-4 border-primary/10 bg-muted shrink-0">
                 <Image 
                   src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word.toLowerCase()}/600/600`} 
                   alt={currentWord.word}
@@ -191,21 +186,17 @@ export default function GamePage() {
                   unoptimized={currentWord.imageUrl?.startsWith('data:')}
                 />
               </div>
-              <div className="w-full md:w-1/2 space-y-4 md:space-y-6 text-left">
+              <div className="w-full md:w-1/2 space-y-4 md:space-y-6 text-left min-w-0">
                 <div className="bg-primary/10 inline-block px-4 md:px-6 py-1 md:py-2 rounded-full text-primary font-black uppercase tracking-widest text-xs md:text-sm">
                   Ready to Learn?
                 </div>
-                <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-primary uppercase sparkle-text leading-tight break-words">
+                <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-primary uppercase sparkle-text leading-tight break-all">
                   {currentWord.word}
                 </h2>
                 <div className="space-y-3 md:space-y-4">
                   <div className="flex items-start gap-2 md:gap-3">
                     <Info className="text-accent shrink-0 h-5 w-5 md:h-6 md:w-6 mt-1" />
-                    <p className="text-lg md:text-xl font-bold text-muted-foreground italic">"{currentWord.definition}"</p>
-                  </div>
-                  <div className="flex items-start gap-2 md:gap-3">
-                    <Zap className="text-secondary shrink-0 h-5 w-5 md:h-6 md:w-6 mt-1" />
-                    <p className="text-lg md:text-xl font-medium text-foreground">{currentWord.exampleSentence}</p>
+                    <p className="text-lg md:text-xl font-bold text-muted-foreground italic line-clamp-3">"{currentWord.definition}"</p>
                   </div>
                 </div>
               </div>
@@ -224,18 +215,18 @@ export default function GamePage() {
           <div className="text-center space-y-8 md:space-y-12 animate-in fade-in zoom-in duration-500 w-full px-4">
             <div className="relative inline-block max-w-full">
               <div className="bg-white p-8 md:p-20 rounded-[2.5rem] md:rounded-[5rem] shadow-3xl border-8 md:border-12 border-primary/20 overflow-hidden">
-                 <p className="text-5xl sm:text-7xl md:text-9xl lg:text-[10rem] font-black text-primary tracking-tighter uppercase sparkle-text break-words">
+                 <p className="text-4xl sm:text-6xl md:text-8xl lg:text-[min(15vw,8rem)] font-black text-primary tracking-tighter uppercase sparkle-text break-all">
                    {currentWord.word}
                  </p>
               </div>
-              <div className="absolute -top-6 -right-6 md:-top-12 md:-right-12 bg-accent h-20 w-20 md:h-32 md:w-32 rounded-full shadow-2xl border-4 md:border-8 border-white flex flex-col items-center justify-center animate-bounce-subtle">
-                  <Clock className="h-5 w-5 md:h-8 md:w-8 text-white mb-0.5 md:mb-1" />
-                  <span className="text-2xl md:text-5xl font-black text-white">{timer}</span>
+              <div className="absolute -top-6 -right-6 md:-top-12 md:-right-12 bg-accent h-16 w-16 md:h-32 md:w-32 rounded-full shadow-2xl border-4 md:border-8 border-white flex flex-col items-center justify-center animate-bounce-subtle">
+                  <Clock className="h-4 w-4 md:h-8 md:w-8 text-white mb-0.5 md:mb-1" />
+                  <span className="text-xl md:text-5xl font-black text-white">{timer}</span>
               </div>
             </div>
             <div className="bg-white/50 backdrop-blur-md px-6 md:px-12 py-4 md:py-6 rounded-full border-4 border-white shadow-xl inline-block">
-               <h2 className="text-2xl md:text-4xl font-black text-foreground uppercase">Memorize Now!</h2>
-               <p className="text-base md:text-xl font-bold text-muted-foreground mt-1 md:mt-2">The letters will hide soon...</p>
+               <h2 className="text-xl md:text-4xl font-black text-foreground uppercase">Memorize Now!</h2>
+               <p className="text-sm md:text-xl font-bold text-muted-foreground mt-1">The letters will hide soon...</p>
             </div>
           </div>
         )}
@@ -244,16 +235,16 @@ export default function GamePage() {
           <div className="w-full max-w-4xl space-y-8 md:space-y-12 text-center px-4">
             <div className="bg-white/70 backdrop-blur-2xl p-6 md:p-16 rounded-[2rem] md:rounded-[4rem] border-4 md:border-8 border-white shadow-3xl space-y-6 md:space-y-12 relative overflow-hidden">
               <div className="flex flex-col items-center gap-4 md:gap-6">
-                <div className="h-24 w-24 md:h-32 md:w-32 relative rounded-2xl md:rounded-3xl overflow-hidden border-4 border-white shadow-xl mb-2">
+                <div className="h-20 w-20 md:h-32 md:w-32 relative rounded-2xl md:rounded-3xl overflow-hidden border-4 border-white shadow-xl mb-2 bg-muted">
                    <img src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word.toLowerCase()}/200/200`} alt="hint" className="object-cover h-full w-full" />
                 </div>
-                <p className="text-lg md:text-3xl font-bold italic text-muted-foreground">"{currentWord.definition}"</p>
+                <p className="text-lg md:text-3xl font-bold italic text-muted-foreground break-words max-w-md">"{currentWord.definition}"</p>
               </div>
 
-              <div className="flex flex-wrap justify-center gap-2 md:gap-4">
+              <div className="flex flex-wrap justify-center gap-2 md:gap-4 overflow-y-auto max-h-[30vh] p-2">
                 {userInput.map((char, i) => (
                   <div key={i} className={cn(
-                    "scrabble-tile text-2xl sm:text-3xl md:text-4xl w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20", 
+                    "scrabble-tile text-xl sm:text-2xl md:text-4xl w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20", 
                     char === "" && "empty", 
                     isWrong && hiddenIndices.includes(i) && "error",
                     !hiddenIndices.includes(i) && "bg-muted/10 text-muted-foreground border-muted/30 shadow-none opacity-60"
@@ -263,7 +254,7 @@ export default function GamePage() {
                 ))}
               </div>
             </div>
-            <div className="bg-primary/20 px-8 md:px-12 py-3 md:py-4 rounded-full text-primary font-black uppercase tracking-widest text-sm md:text-lg inline-block border-2 md:border-4 border-primary/20 animate-pulse">
+            <div className="bg-primary/20 px-8 md:px-12 py-3 md:py-4 rounded-full text-primary font-black uppercase tracking-widest text-xs md:text-lg inline-block border-2 md:border-4 border-primary/20 animate-pulse">
               Snap the missing letters!
             </div>
           </div>
@@ -271,12 +262,12 @@ export default function GamePage() {
 
         {gameState === "success" && currentWord && (
           <div className="text-center space-y-8 md:space-y-10 animate-in duration-500 px-4">
-            <div className="text-8xl md:text-[12rem] animate-bounce">🌟</div>
+            <div className="text-6xl md:text-[12rem] animate-bounce">🌟</div>
             <div className="space-y-3 md:space-y-4">
-              <h2 className="text-5xl md:text-8xl font-black text-primary drop-shadow-lg">AWESOME!</h2>
-              <p className="text-xl md:text-3xl font-bold text-muted-foreground">You snapped <span className="text-secondary font-black underline decoration-primary uppercase">{currentWord.word}</span> perfectly!</p>
+              <h2 className="text-4xl md:text-8xl font-black text-primary drop-shadow-lg">AWESOME!</h2>
+              <p className="text-lg md:text-3xl font-bold text-muted-foreground">You snapped <span className="text-secondary font-black underline decoration-primary uppercase break-all">{currentWord.word}</span> perfectly!</p>
             </div>
-            <Button onClick={nextWord} className="btn-bouncy px-12 md:px-20 py-6 md:py-10 text-xl md:text-3xl h-auto bg-secondary text-white shadow-2xl">
+            <Button onClick={nextWord} className="btn-bouncy px-10 md:px-20 py-4 md:py-10 text-lg md:text-3xl h-auto bg-secondary text-white shadow-2xl">
               {currentWordIndex + 1 === wordsToPlay.length ? "Finish Session!" : "Next Challenge"}
             </Button>
           </div>
@@ -284,29 +275,29 @@ export default function GamePage() {
 
         {gameState === "finished" && (
           <div className="text-center space-y-8 md:space-y-12 animate-in fade-in duration-700 w-full px-4">
-             <div className="text-8xl md:text-[12rem]">🏆</div>
+             <div className="text-6xl md:text-[12rem]">🏆</div>
              <div className="space-y-3 md:space-y-4">
-                <h2 className="text-4xl md:text-7xl font-black text-foreground">SPELLING CHAMP!</h2>
-                <p className="text-xl md:text-3xl font-bold text-muted-foreground">You finished the {difficulty} level!</p>
+                <h2 className="text-3xl md:text-7xl font-black text-foreground">SPELLING CHAMP!</h2>
+                <p className="text-lg md:text-3xl font-bold text-muted-foreground">You finished the {difficulty} level!</p>
              </div>
              
              <div className="flex flex-col sm:flex-row gap-4 md:gap-8 justify-center w-full max-w-2xl mx-auto">
-                <div className="bg-white p-8 md:p-12 rounded-[2rem] md:rounded-[3.5rem] border-4 md:border-8 border-primary/20 shadow-2xl flex-1">
-                   <p className="text-xs md:text-sm font-black text-muted-foreground uppercase mb-2 md:mb-3">Words</p>
-                   <p className="text-4xl md:text-7xl font-black text-primary">{wordsToPlay.length}</p>
+                <div className="bg-white p-6 md:p-12 rounded-[2rem] md:rounded-[3.5rem] border-4 md:border-8 border-primary/20 shadow-2xl flex-1">
+                   <p className="text-xs md:text-sm font-black text-muted-foreground uppercase mb-2">Words</p>
+                   <p className="text-3xl md:text-7xl font-black text-primary">{wordsToPlay.length}</p>
                 </div>
-                <div className="bg-white p-8 md:p-12 rounded-[2rem] md:rounded-[3.5rem] border-4 md:border-8 border-secondary/20 shadow-2xl flex-1">
-                   <p className="text-xs md:text-sm font-black text-muted-foreground uppercase mb-2 md:mb-3">Stars</p>
-                   <p className="text-4xl md:text-7xl font-black text-secondary">{wordsToPlay.length}</p>
+                <div className="bg-white p-6 md:p-12 rounded-[2rem] md:rounded-[3.5rem] border-4 md:border-8 border-secondary/20 shadow-2xl flex-1">
+                   <p className="text-xs md:text-sm font-black text-muted-foreground uppercase mb-2">Stars</p>
+                   <p className="text-3xl md:text-7xl font-black text-secondary">{wordsToPlay.length}</p>
                 </div>
              </div>
 
-             <div className="flex flex-col gap-4 md:gap-6 mt-8 md:mt-12 items-center">
-                <Button onClick={() => router.push("/")} className="btn-bouncy px-16 md:px-24 py-6 md:py-10 text-xl md:text-3xl h-auto bg-primary text-white w-fit shadow-2xl">
+             <div className="flex flex-col gap-4 mt-8 items-center">
+                <Button onClick={() => router.push("/")} className="btn-bouncy px-12 md:px-24 py-4 md:py-10 text-lg md:text-3xl h-auto bg-primary text-white w-fit shadow-2xl">
                   Go to Lobby
                 </Button>
-                <Button variant="ghost" onClick={() => window.location.reload()} className="text-muted-foreground font-black flex items-center gap-2 md:gap-3 text-lg md:text-xl hover:text-primary transition-colors">
-                  <RefreshCcw className="h-5 w-5 md:h-6 md:w-6" /> Play Again
+                <Button variant="ghost" onClick={() => window.location.reload()} className="text-muted-foreground font-black flex items-center gap-2 text-base md:text-xl hover:text-primary">
+                  <RefreshCcw className="h-4 w-4 md:h-6 md:w-6" /> Play Again
                 </Button>
              </div>
           </div>

@@ -44,87 +44,87 @@ export default function LobbyPage() {
   return (
     <div className="min-h-screen relative flex flex-col items-center">
       <div className="bg-animate">
-        <Cloud className="floating-element text-primary/20" size={120} style={{ top: '10%', left: '5%', animationDelay: '0s' }} />
-        <Star className="floating-element text-yellow-400/30" size={40} style={{ top: '20%', right: '10%', animationDelay: '2s' }} />
-        <Cloud className="floating-element text-primary/20" size={80} style={{ bottom: '15%', left: '15%', animationDelay: '4s' }} />
-        <Sun className="floating-element text-orange-400/20" size={150} style={{ top: '-20px', right: '-20px', animationDelay: '1s' }} />
-        <Sparkles className="floating-element text-primary/30" size={50} style={{ bottom: '30%', right: '5%', animationDelay: '3s' }} />
+        <Cloud className="floating-element text-accent/30" size={120} style={{ top: '10%', left: '5%', animationDelay: '0s' }} />
+        <Star className="floating-element text-primary/40" size={40} style={{ top: '20%', right: '10%', animationDelay: '2s' }} />
+        <Cloud className="floating-element text-accent/30" size={80} style={{ bottom: '15%', left: '15%', animationDelay: '4s' }} />
+        <Sun className="floating-element text-primary/30" size={200} style={{ top: '-40px', right: '-40px', animationDelay: '1s' }} />
+        <Sparkles className="floating-element text-secondary/40" size={50} style={{ bottom: '30%', right: '5%', animationDelay: '3s' }} />
       </div>
 
-      <header className="w-full max-w-4xl p-6 flex justify-between items-center z-10">
-        <div className="flex items-center gap-2">
-          <div className="bg-primary p-3 rounded-2xl shadow-lg rotate-3">
-            <Rocket className="text-white h-8 w-8" />
+      <header className="w-full max-w-5xl p-8 flex justify-between items-center z-10">
+        <div className="flex items-center gap-3">
+          <div className="bg-primary p-4 rounded-3xl shadow-xl -rotate-6">
+            <Rocket className="text-white h-10 w-10" />
           </div>
-          <h1 className="text-4xl font-black tracking-tighter text-foreground drop-shadow-sm">
+          <h1 className="text-5xl font-black tracking-tighter text-foreground drop-shadow-md">
             Spell<span className="text-primary">Snap!</span>
           </h1>
         </div>
 
         {user ? (
-          <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md p-2 pl-4 rounded-full border-2 border-white shadow-sm">
-            <span className="font-bold hidden md:block">{user.displayName}</span>
-            <Avatar className="h-10 w-10 border-2 border-primary">
+          <div className="flex items-center gap-4 bg-white/90 backdrop-blur-xl p-3 pl-6 rounded-full border-4 border-white shadow-xl">
+            <span className="font-black hidden md:block text-primary">{user.displayName}</span>
+            <Avatar className="h-12 w-12 border-4 border-primary">
               <AvatarImage src={user.photoURL || ""} />
               <AvatarFallback><User /></AvatarFallback>
             </Avatar>
-            <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-full">
-              <LogOut className="h-5 w-5" />
+            <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-full hover:bg-secondary/10">
+              <LogOut className="h-6 w-6 text-secondary" />
             </Button>
           </div>
         ) : (
-          <Button onClick={handleSignIn} className="btn-bouncy bg-primary text-white px-6 h-12 text-lg">
-            <LogIn className="mr-2 h-5 w-5" /> Join In!
+          <Button onClick={handleSignIn} className="btn-bouncy bg-primary text-white px-10 h-16 text-xl">
+            <LogIn className="mr-3 h-6 w-6" /> Join the Fun!
           </Button>
         )}
       </header>
 
-      <main className="w-full max-w-4xl p-6 space-y-10 z-10 flex-1">
-        <section className="bg-white/40 backdrop-blur-xl p-8 rounded-[3rem] border-4 border-white shadow-2xl flex flex-col md:flex-row items-center gap-8">
-          <div className="flex-1 space-y-4 text-center md:text-left">
-            <h2 className="text-5xl font-black leading-tight text-foreground">
-              Ready for a <span className="text-primary">Spelling Adventure?</span>
+      <main className="w-full max-w-5xl p-8 space-y-12 z-10 flex-1">
+        <section className="bg-white/60 backdrop-blur-2xl p-12 rounded-[4rem] border-8 border-white shadow-3xl flex flex-col md:flex-row items-center gap-12">
+          <div className="flex-1 space-y-6 text-center md:text-left">
+            <h2 className="text-6xl font-black leading-tight text-foreground">
+              Ready to <span className="sparkle-text">Snap Words?</span>
             </h2>
-            <p className="text-xl font-medium text-muted-foreground">
-              Master new words, earn shiny stars, and become a spelling champion!
+            <p className="text-2xl font-bold text-muted-foreground leading-relaxed">
+              Play games, earn stars, and become the classroom champion!
             </p>
-            <div className="flex flex-wrap justify-center md:justify-start gap-4 pt-4">
-              <div className="bg-white px-6 py-3 rounded-full shadow-sm flex items-center gap-2 border-2 border-primary/10">
-                <Star className="text-primary fill-primary" />
-                <span className="font-black text-2xl">{stats.stars}</span>
+            <div className="flex flex-wrap justify-center md:justify-start gap-6 pt-4">
+              <div className="bg-white px-8 py-4 rounded-3xl shadow-lg flex items-center gap-3 border-4 border-primary/20">
+                <Star className="text-primary fill-primary h-8 w-8" />
+                <span className="font-black text-3xl">{stats.stars}</span>
               </div>
-              <div className="bg-white px-6 py-3 rounded-full shadow-sm flex items-center gap-2 border-2 border-secondary/10">
-                <Award className="text-secondary" />
-                <span className="font-black text-2xl">{stats.wordsMastered}</span>
+              <div className="bg-white px-8 py-4 rounded-3xl shadow-lg flex items-center gap-3 border-4 border-secondary/20">
+                <Award className="text-secondary h-8 w-8" />
+                <span className="font-black text-3xl">{stats.wordsMastered}</span>
               </div>
             </div>
           </div>
           <div className="relative group">
-            <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl animate-pulse group-hover:bg-primary/40 transition-all" />
-            <div className="relative z-10 bg-white p-10 rounded-[4rem] shadow-xl border-8 border-primary/20 rotate-3 group-hover:rotate-0 transition-transform">
-               <Sun className="h-32 w-32 text-primary animate-spin-slow" />
+            <div className="absolute inset-0 bg-primary/30 rounded-full blur-3xl animate-pulse group-hover:bg-primary/50 transition-all" />
+            <div className="relative z-10 bg-white p-12 rounded-[5rem] shadow-2xl border-8 border-primary/20 rotate-6 group-hover:rotate-0 transition-transform duration-500">
+               <Sun className="h-40 w-40 text-primary animate-spin-slow" />
             </div>
           </div>
         </section>
 
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { id: 'beginner', title: 'Beginner', icon: Rocket, color: 'bg-primary', text: 'Short words (3-4 letters)', stats: '120 Sessions' },
-            { id: 'intermediate', title: 'Explorer', icon: Camera, color: 'bg-orange-400', text: 'Medium words (5-7 letters)', stats: '85 Sessions' },
-            { id: 'advanced', title: 'Wizard', icon: Lightbulb, color: 'bg-secondary', text: 'Complex words (8+ letters)', stats: '40 Sessions' }
+            { id: 'beginner', title: 'Beginner', icon: Rocket, color: 'bg-primary', text: 'Short words (3-4 letters)' },
+            { id: 'intermediate', title: 'Explorer', icon: Camera, color: 'bg-accent', text: 'Medium words (5-7 letters)' },
+            { id: 'advanced', title: 'Wizard', icon: Lightbulb, color: 'bg-secondary', text: 'Complex words (8+ letters)' }
           ].map((cat) => (
             <Link key={cat.id} href={`/game?difficulty=${cat.id}`} className="block">
               <Card className="card-snap overflow-hidden h-full">
                 <CardContent className="p-0 flex flex-col">
-                  <div className={`${cat.color} p-8 flex justify-center items-center`}>
-                    <cat.icon className="h-16 w-16 text-white" />
+                  <div className={`${cat.color} p-12 flex justify-center items-center`}>
+                    <cat.icon className="h-20 w-20 text-white" />
                   </div>
-                  <div className="p-6 text-center space-y-2">
-                    <h4 className="text-2xl font-black">{cat.title}</h4>
-                    <p className="text-muted-foreground font-bold text-sm leading-tight">{cat.text}</p>
-                    <div className="pt-4">
-                      <Button className="btn-bouncy w-full h-12 bg-white border-2 border-primary/10 text-primary hover:bg-primary hover:text-white group">
-                        <Play className="mr-2 h-5 w-5 fill-current" /> Play
+                  <div className="p-8 text-center space-y-4">
+                    <h4 className="text-3xl font-black">{cat.title}</h4>
+                    <p className="text-muted-foreground font-bold text-lg leading-tight">{cat.text}</p>
+                    <div className="pt-6">
+                      <Button className="btn-bouncy w-full h-16 bg-white border-4 border-primary/10 text-primary hover:bg-primary hover:text-white text-xl">
+                        <Play className="mr-3 h-6 w-6 fill-current" /> Let's Play!
                       </Button>
                     </div>
                   </div>
@@ -134,23 +134,23 @@ export default function LobbyPage() {
           ))}
         </section>
 
-        <footer className="flex flex-col md:flex-row gap-4">
-           <Link href="/stats" className="flex-1">
-              <Button variant="outline" className="w-full h-24 rounded-[2rem] border-4 border-white bg-white/50 hover:bg-white flex flex-col gap-1 transition-all shadow-lg">
-                 <Award className="h-8 w-8 text-secondary" />
-                 <span className="text-xs font-black uppercase tracking-widest">My Progress</span>
+        <footer className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
+           <Link href="/stats">
+              <Button variant="outline" className="w-full h-28 rounded-[3rem] border-8 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-xl group">
+                 <Award className="h-10 w-10 text-secondary group-hover:scale-125 transition-transform" />
+                 <span className="text-sm font-black uppercase tracking-widest text-secondary">My Progress</span>
               </Button>
            </Link>
-           <Link href="/admin" className="flex-1">
-              <Button variant="outline" className="w-full h-24 rounded-[2rem] border-4 border-white bg-white/50 hover:bg-white flex flex-col gap-1 transition-all shadow-lg">
-                 <Settings className="h-8 w-8 text-primary" />
-                 <span className="text-xs font-black uppercase tracking-widest">Settings</span>
+           <Link href="/admin">
+              <Button variant="outline" className="w-full h-28 rounded-[3rem] border-8 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-xl group">
+                 <Settings className="h-10 w-10 text-primary group-hover:scale-125 transition-transform" />
+                 <span className="text-sm font-black uppercase tracking-widest text-primary">Teachers</span>
               </Button>
            </Link>
-           <Link href="/admin/generator" className="flex-1">
-              <Button variant="outline" className="w-full h-24 rounded-[2rem] border-4 border-white bg-white/50 hover:bg-white flex flex-col gap-1 transition-all shadow-lg">
-                 <Sparkles className="h-8 w-8 text-yellow-500" />
-                 <span className="text-xs font-black uppercase tracking-widest">AI Generator</span>
+           <Link href="/admin/generator">
+              <Button variant="outline" className="w-full h-28 rounded-[3rem] border-8 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-xl group">
+                 <Sparkles className="h-10 w-10 text-yellow-500 group-hover:scale-125 transition-transform" />
+                 <span className="text-sm font-black uppercase tracking-widest text-yellow-600">AI Magic</span>
               </Button>
            </Link>
         </footer>

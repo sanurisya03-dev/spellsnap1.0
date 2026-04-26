@@ -1,7 +1,8 @@
 'use client';
 
+// This configuration is fetched from the Firebase Project
 export const firebaseConfig = {
-  apiKey: "AIzaSyAs-demo-key-for-studio",
+  apiKey: "AIzaSyAs-demo-key-for-studio", // Note: In a production environment, this would be your actual API key.
   authDomain: "spellsnap-demo.firebaseapp.com",
   projectId: "spellsnap-demo",
   storageBucket: "spellsnap-demo.appspot.com",

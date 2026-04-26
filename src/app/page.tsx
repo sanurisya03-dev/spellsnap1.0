@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles, Play, Award, Settings, Star, LogIn, LogOut, User, Loader2, Rocket, Camera, Lightbulb, Cloud, Sun, DoorOpen, Users } from "lucide-react";
+import { Sparkles, Play, Award, Settings, Star, LogIn, LogOut, User, Loader2, Rocket, Camera, Lightbulb, Cloud, Sun, DoorOpen, Users, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGameStore } from "@/lib/game-store";
@@ -160,29 +160,35 @@ export default function LobbyPage() {
           ))}
         </section>
 
-        <footer className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-8">
+        <footer className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 pt-8">
            <Link href="/join">
-              <Button variant="outline" className="w-full h-28 rounded-[3rem] border-8 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-xl group">
-                 <DoorOpen className="h-10 w-10 text-accent group-hover:scale-125 transition-transform" />
-                 <span className="text-sm font-black uppercase tracking-widest text-accent">Join Class</span>
+              <Button variant="outline" className="w-full h-28 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg group">
+                 <DoorOpen className="h-8 w-8 text-accent group-hover:scale-125 transition-transform" />
+                 <span className="text-[10px] font-black uppercase tracking-widest text-accent">Join Class</span>
               </Button>
            </Link>
            <Link href="/stats">
-              <Button variant="outline" className="w-full h-28 rounded-[3rem] border-8 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-xl group">
-                 <Award className="h-10 w-10 text-secondary group-hover:scale-125 transition-transform" />
-                 <span className="text-sm font-black uppercase tracking-widest text-secondary">My Progress</span>
+              <Button variant="outline" className="w-full h-28 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg group">
+                 <Award className="h-8 w-8 text-secondary group-hover:scale-125 transition-transform" />
+                 <span className="text-[10px] font-black uppercase tracking-widest text-secondary">Progress</span>
               </Button>
            </Link>
            <Link href="/teacher">
-              <Button variant="outline" className="w-full h-28 rounded-[3rem] border-8 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-xl group">
-                 <Settings className="h-10 w-10 text-primary group-hover:scale-125 transition-transform" />
-                 <span className="text-sm font-black uppercase tracking-widest text-primary">Teachers</span>
+              <Button variant="outline" className="w-full h-28 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg group">
+                 <Settings className="h-8 w-8 text-primary group-hover:scale-125 transition-transform" />
+                 <span className="text-[10px] font-black uppercase tracking-widest text-primary">Teachers</span>
+              </Button>
+           </Link>
+           <Link href="/admin">
+              <Button variant="outline" className="w-full h-28 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg group">
+                 <BookOpen className="h-8 w-8 text-orange-500 group-hover:scale-125 transition-transform" />
+                 <span className="text-[10px] font-black uppercase tracking-widest text-orange-600">Word Bank</span>
               </Button>
            </Link>
            <Link href="/admin/generator">
-              <Button variant="outline" className="w-full h-28 rounded-[3rem] border-8 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-xl group">
-                 <Sparkles className="h-10 w-10 text-yellow-500 group-hover:scale-125 transition-transform" />
-                 <span className="text-sm font-black uppercase tracking-widest text-yellow-600">AI Magic</span>
+              <Button variant="outline" className="w-full h-28 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg group">
+                 <Sparkles className="h-8 w-8 text-yellow-500 group-hover:scale-125 transition-transform" />
+                 <span className="text-[10px] font-black uppercase tracking-widest text-yellow-600">AI Magic</span>
               </Button>
            </Link>
         </footer>

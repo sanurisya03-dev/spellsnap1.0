@@ -16,7 +16,8 @@ import {
   X,
   Copy,
   LayoutDashboard,
-  LogIn
+  LogIn,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ import { useToast } from "@/hooks/use-toast";
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import Link from "next/link";
 
 export default function TeacherDashboard() {
   const router = useRouter();
@@ -193,40 +195,47 @@ export default function TeacherDashboard() {
           </div>
         </div>
 
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="rounded-xl bg-primary hover:bg-primary/90 font-bold">
-              <Plus className="mr-2 h-5 w-5" /> Create New Class
+        <div className="flex items-center gap-3">
+          <Link href="/admin">
+            <Button variant="outline" className="rounded-xl font-bold border-2">
+              <BookOpen className="mr-2 h-5 w-5 text-orange-500" /> Manage Word Bank
             </Button>
-          </DialogTrigger>
-          <DialogContent className="rounded-[3rem]">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-black">New Classroom</DialogTitle>
-              <DialogDescription>Create a space for your pupils to learn.</DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-4">
-              <div className="space-y-2">
-                <Label className="font-bold">Class Name</Label>
-                <Input 
-                  placeholder="e.g., Year 3 Blue" 
-                  value={newClassName} 
-                  onChange={(e) => setNewClassName(e.target.value)} 
-                  className="rounded-xl border-2 h-12"
-                  disabled={isCreating}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button 
-                onClick={handleCreateClass} 
-                className="w-full bg-primary hover:bg-primary/90 h-14 rounded-2xl font-black text-lg"
-                disabled={isCreating}
-              >
-                {isCreating ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : "Create Class"}
+          </Link>
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="rounded-xl bg-primary hover:bg-primary/90 font-bold">
+                <Plus className="mr-2 h-5 w-5" /> Create New Class
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="rounded-[3rem]">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-black">New Classroom</DialogTitle>
+                <DialogDescription>Create a space for your pupils to learn.</DialogDescription>
+              </DialogHeader>
+              <div className="py-4 space-y-4">
+                <div className="space-y-2">
+                  <Label className="font-bold">Class Name</Label>
+                  <Input 
+                    placeholder="e.g., Year 3 Blue" 
+                    value={newClassName} 
+                    onChange={(e) => setNewClassName(e.target.value)} 
+                    className="rounded-xl border-2 h-12"
+                    disabled={isCreating}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button 
+                  onClick={handleCreateClass} 
+                  className="w-full bg-primary hover:bg-primary/90 h-14 rounded-2xl font-black text-lg"
+                  disabled={isCreating}
+                >
+                  {isCreating ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : "Create Class"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -276,8 +285,15 @@ export default function TeacherDashboard() {
 
                 <TabsContent value="assignments" className="space-y-6 animate-in fade-in zoom-in duration-300">
                   <div className="flex justify-between items-center">
-                     <h3 className="text-2xl font-black">Assign Words</h3>
-                     <span className="text-sm font-bold bg-primary/10 text-primary px-3 py-1 rounded-full">{selectedClass.assignedWordIds?.length || 0} assigned</span>
+                     <div>
+                       <h3 className="text-2xl font-black">Assign Words</h3>
+                       <p className="text-xs text-muted-foreground">Select words from your bank to assign to this class.</p>
+                     </div>
+                     <Link href="/admin">
+                        <Button variant="ghost" size="sm" className="text-primary font-black">
+                          Edit Bank <ExternalLink className="ml-1 h-3 w-3" />
+                        </Button>
+                     </Link>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {allWords.map(word => {
@@ -287,7 +303,10 @@ export default function TeacherDashboard() {
                           <CardContent className="p-4 flex justify-between items-center gap-4">
                             <div className="flex-1">
                                <p className="text-xl font-black uppercase text-foreground">{word.word}</p>
-                               <p className="text-xs text-muted-foreground line-clamp-1 italic">"{word.definition}"</p>
+                               <div className="flex gap-2">
+                                 <span className="text-[10px] font-bold text-muted-foreground uppercase">{word.difficulty}</span>
+                                 <span className="text-[10px] font-bold text-accent uppercase">{word.theme}</span>
+                               </div>
                             </div>
                             <Button 
                               size="sm" 

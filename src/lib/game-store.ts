@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -90,11 +91,9 @@ export function useGameStore() {
   }, [firebaseWords]);
 
   const playableWords = useMemo(() => {
-    // If pupil is in a class, only show words assigned to that class
     if (activeClass && activeClass.assignedWordIds && activeClass.assignedWordIds.length > 0) {
       return allWords.filter(w => activeClass.assignedWordIds.includes(w.id));
     }
-    // Otherwise show all words
     return allWords;
   }, [allWords, activeClass]);
 
@@ -110,7 +109,6 @@ export function useGameStore() {
         }));
       });
 
-    // Also update class-specific progress if applicable
     if (user?.uid && firebaseStats?.activeClassId && db) {
       const classProgressRef = doc(db, 'classrooms', firebaseStats.activeClassId, 'pupils', user.uid);
       const classUpdates = {
@@ -138,10 +136,8 @@ export function useGameStore() {
     
     const classDoc = snapshot.docs[0];
     
-    // Set active class for pupil
     setDoc(statsRef, { activeClassId: classDoc.id }, { merge: true });
     
-    // Register pupil in class subcollection
     const pRef = doc(db, 'classrooms', classDoc.id, 'pupils', user.uid);
     setDoc(pRef, { pupilName: user.displayName || "Pupil", stars: 0, wordsMastered: 0 }, { merge: true });
     
@@ -166,7 +162,8 @@ export function useGameStore() {
     deleteDoc(wordRef);
   }, [db]);
 
-  const isLoaded = !userLoading && !wordsLoading && (!user || !statsLoading);
+  // Reduced blocking time: only wait for Auth initialization
+  const isLoaded = !userLoading;
 
   return {
     stats,
@@ -181,6 +178,7 @@ export function useGameStore() {
     addWordMastered,
     addCustomWord,
     deleteCustomWord,
-    isLoaded
+    isLoaded,
+    loadingData: wordsLoading || statsLoading || classLoading
   };
 }

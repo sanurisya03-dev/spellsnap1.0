@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -10,7 +11,7 @@ import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function LobbyPage() {
-  const { stats, isLoaded, activeClass, leaveClass } = useGameStore();
+  const { stats, isLoaded, activeClass, leaveClass, loadingData } = useGameStore();
   const { user, loading: userLoading } = useUser();
   const auth = useAuth();
 
@@ -61,25 +62,32 @@ export default function LobbyPage() {
           </h1>
         </div>
 
-        {user ? (
-          <div className="flex items-center gap-4 bg-white/90 backdrop-blur-xl p-3 pl-6 rounded-full border-4 border-white shadow-xl">
-            <div className="flex flex-col text-right">
-              <span className="font-black hidden md:block text-primary leading-none">{user.displayName}</span>
-              {activeClass && <span className="text-[10px] font-bold text-accent uppercase tracking-wider">{activeClass.name}</span>}
+        <div className="flex items-center gap-4">
+          {loadingData && (
+            <div className="bg-white/50 backdrop-blur-sm p-2 rounded-full border-2 border-white animate-pulse">
+               <Loader2 className="h-4 w-4 animate-spin text-primary" />
             </div>
-            <Avatar className="h-12 w-12 border-4 border-primary">
-              <AvatarImage src={user.photoURL || ""} />
-              <AvatarFallback><User /></AvatarFallback>
-            </Avatar>
-            <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-full hover:bg-secondary/10">
-              <LogOut className="h-6 w-6 text-secondary" />
+          )}
+          {user ? (
+            <div className="flex items-center gap-4 bg-white/90 backdrop-blur-xl p-3 pl-6 rounded-full border-4 border-white shadow-xl">
+              <div className="flex flex-col text-right">
+                <span className="font-black hidden md:block text-primary leading-none">{user.displayName}</span>
+                {activeClass && <span className="text-[10px] font-bold text-accent uppercase tracking-wider">{activeClass.name}</span>}
+              </div>
+              <Avatar className="h-12 w-12 border-4 border-primary">
+                <AvatarImage src={user.photoURL || ""} />
+                <AvatarFallback><User /></AvatarFallback>
+              </Avatar>
+              <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-full hover:bg-secondary/10">
+                <LogOut className="h-6 w-6 text-secondary" />
+              </Button>
+            </div>
+          ) : (
+            <Button onClick={handleSignIn} className="btn-bouncy bg-primary text-white px-10 h-16 text-xl">
+              <LogIn className="mr-3 h-6 w-6" /> Join the Fun!
             </Button>
-          </div>
-        ) : (
-          <Button onClick={handleSignIn} className="btn-bouncy bg-primary text-white px-10 h-16 text-xl">
-            <LogIn className="mr-3 h-6 w-6" /> Join the Fun!
-          </Button>
-        )}
+          )}
+        </div>
       </header>
 
       <main className="w-full max-w-5xl p-8 space-y-12 z-10 flex-1">

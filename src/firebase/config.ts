@@ -1,9 +1,9 @@
 'use client';
 
-// Updated Firebase configuration with a valid structural format.
-// In a real environment, these values would be provided by the Firebase Console.
+// Structurally valid Firebase configuration.
+// Replace these with your actual values from the Firebase Console (Settings > General).
 export const firebaseConfig = {
-  apiKey: "AIzaSyAs-DEMO-KEY-VALID-FOR-STUDIO-STRUCTURE",
+  apiKey: "AIzaSyAs-VALID-API-KEY-FOR-STUDIO-STRUCTURE",
   authDomain: "spellsnap-demo.firebaseapp.com",
   projectId: "spellsnap-demo",
   storageBucket: "spellsnap-demo.appspot.com",

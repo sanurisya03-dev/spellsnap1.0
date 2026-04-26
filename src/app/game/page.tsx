@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { ArrowLeft, Star, RefreshCcw, Info, Loader2, Cloud, Zap } from "lucide-react";
+import { ArrowLeft, Star, RefreshCcw, Info, Loader2, Cloud, Zap, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGameStore, type WordItem, type Difficulty } from "@/lib/game-store";
 import { Progress } from "@/components/ui/progress";
@@ -25,12 +25,14 @@ export default function GamePage() {
   const [timer, setTimer] = useState(10);
   const [hiddenIndices, setHiddenIndices] = useState<number[]>([]);
 
+  // Select words based on difficulty and availability
   useEffect(() => {
     if (!isLoaded || playableWords.length === 0 || wordsToPlay.length > 0) return;
     
     let filtered = playableWords.filter(w => w.difficulty === difficulty);
-    if (filtered.length === 0 && playableWords.length > 0) {
-      filtered = playableWords;
+    // Fallback if no words match specific difficulty
+    if (filtered.length === 0) {
+        filtered = playableWords;
     }
 
     const shuffled = [...filtered].sort(() => 0.5 - Math.random()).slice(0, 5);
@@ -39,6 +41,7 @@ export default function GamePage() {
 
   const currentWord = useMemo(() => wordsToPlay[currentWordIndex], [wordsToPlay, currentWordIndex]);
 
+  // Memorization Timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (gameState === "memorizing" && timer > 0) {
@@ -60,8 +63,9 @@ export default function GamePage() {
     const indices = Array.from({ length: currentWord.word.length }, (_, i) => i);
     let toHide: number[] = [];
     
+    // Logic for hiding letters based on difficulty
     if (difficulty === "advanced") {
-      toHide = indices;
+      toHide = indices; // Hide all
     } else if (difficulty === "intermediate") {
       const count = Math.ceil(currentWord.word.length / 2);
       toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, count);
@@ -167,7 +171,7 @@ export default function GamePage() {
             <span>{activeClass ? `Class: ${activeClass.name}` : "General Practice"}</span>
             <span>{currentWordIndex + 1} of {wordsToPlay.length}</span>
           </div>
-          <Progress value={((currentWordIndex + 1) / wordsToPlay.length) * 100} className="h-6 bg-white border-4 border-primary/20 rounded-full" />
+          <Progress value={((currentWordIndex + 1) / (wordsToPlay.length || 1)) * 100} className="h-6 bg-white border-4 border-primary/20 rounded-full" />
         </div>
         <div className="bg-primary text-white font-black px-8 py-3 rounded-full shadow-xl border-4 border-white text-lg">
           {difficulty.toUpperCase()}
@@ -189,7 +193,7 @@ export default function GamePage() {
               </div>
               <div className="w-full md:w-1/2 space-y-6 text-left">
                 <div className="bg-primary/10 inline-block px-6 py-2 rounded-full text-primary font-black uppercase tracking-widest">
-                  Target Word
+                  Ready to Learn?
                 </div>
                 <h2 className="text-8xl font-black text-primary uppercase sparkle-text leading-tight">{currentWord.word}</h2>
                 <div className="space-y-4">
@@ -208,7 +212,7 @@ export default function GamePage() {
             <div className="space-y-4">
                <h3 className="text-3xl font-black text-foreground">Look carefully! Ready to memorize?</h3>
                <Button onClick={handleStartMemorizing} className="btn-bouncy px-20 py-10 text-4xl h-auto bg-primary text-white shadow-2xl">
-                 GO!
+                 START!
                </Button>
             </div>
           </div>
@@ -220,13 +224,14 @@ export default function GamePage() {
               <div className="bg-white p-20 rounded-[5rem] shadow-3xl border-12 border-primary/20">
                  <p className="text-[12rem] font-black text-primary tracking-tighter uppercase sparkle-text">{currentWord.word}</p>
               </div>
-              <div className="absolute -top-12 -right-12 bg-accent h-24 w-24 rounded-full shadow-2xl border-8 border-white flex items-center justify-center animate-bounce-subtle">
-                  <span className="text-4xl font-black text-white">{timer}</span>
+              <div className="absolute -top-12 -right-12 bg-accent h-32 w-32 rounded-full shadow-2xl border-8 border-white flex flex-col items-center justify-center animate-bounce-subtle">
+                  <Clock className="h-8 w-8 text-white mb-1" />
+                  <span className="text-5xl font-black text-white">{timer}</span>
               </div>
             </div>
             <div className="bg-white/50 backdrop-blur-md px-12 py-6 rounded-full border-4 border-white shadow-xl">
                <h2 className="text-4xl font-black text-foreground uppercase">Memorize Now!</h2>
-               <p className="text-xl font-bold text-muted-foreground mt-2">Hiding letters in {timer} seconds...</p>
+               <p className="text-xl font-bold text-muted-foreground mt-2">The letters will hide soon...</p>
             </div>
           </div>
         )}
@@ -241,13 +246,13 @@ export default function GamePage() {
                 <p className="text-3xl font-bold italic text-muted-foreground">"{currentWord.definition}"</p>
               </div>
 
-              <div className="flex flex-wrap justify-center gap-6">
+              <div className="flex flex-wrap justify-center gap-4">
                 {userInput.map((char, i) => (
                   <div key={i} className={cn(
                     "scrabble-tile", 
                     char === "" && "empty", 
                     isWrong && hiddenIndices.includes(i) && "error",
-                    !hiddenIndices.includes(i) && "bg-muted/10 text-muted-foreground border-muted/30 shadow-none"
+                    !hiddenIndices.includes(i) && "bg-muted/10 text-muted-foreground border-muted/30 shadow-none opacity-60"
                   )}>
                     {char}
                   </div>
@@ -255,7 +260,7 @@ export default function GamePage() {
               </div>
             </div>
             <div className="bg-primary/20 px-12 py-4 rounded-full text-primary font-black uppercase tracking-widest text-lg inline-block border-4 border-primary/20 animate-pulse">
-              Guess the missing letters!
+              Snap the missing letters!
             </div>
           </div>
         )}
@@ -268,7 +273,7 @@ export default function GamePage() {
               <p className="text-3xl font-bold text-muted-foreground">You snapped <span className="text-secondary font-black underline decoration-primary uppercase">{currentWord.word}</span> perfectly!</p>
             </div>
             <Button onClick={nextWord} className="btn-bouncy px-20 py-10 text-3xl h-auto bg-secondary text-white shadow-2xl">
-              {currentWordIndex + 1 === wordsToPlay.length ? "Finish Game!" : "Next Word"}
+              {currentWordIndex + 1 === wordsToPlay.length ? "Finish Session!" : "Next Challenge"}
             </Button>
           </div>
         )}
@@ -294,7 +299,7 @@ export default function GamePage() {
 
              <div className="flex flex-col gap-6 mt-12 items-center">
                 <Button onClick={() => router.push("/")} className="btn-bouncy px-24 py-10 text-3xl h-auto bg-primary text-white w-fit shadow-2xl">
-                  Lobby
+                  Go to Lobby
                 </Button>
                 <Button variant="ghost" onClick={() => window.location.reload()} className="text-muted-foreground font-black flex items-center gap-3 text-xl hover:text-primary transition-colors">
                   <RefreshCcw className="h-6 w-6" /> Play Again

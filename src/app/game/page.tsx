@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { ArrowLeft, CheckCircle2, Star, RefreshCcw, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGameStore, type WordItem, type Difficulty } from "@/lib/game-store";
@@ -20,7 +20,7 @@ export default function GamePage() {
   const [wordsToPlay, setWordsToPlay] = useState<WordItem[]>([]);
   const [isWrong, setIsWrong] = useState(false);
 
-  // Initialize game session
+  // Initialize game session once per difficulty/load
   useEffect(() => {
     if (!isLoaded) return;
     
@@ -29,14 +29,17 @@ export default function GamePage() {
     else if (difficulty === "intermediate") filtered = allWords.filter(w => w.word.length >= 5 && w.word.length <= 7);
     else if (difficulty === "advanced") filtered = allWords.filter(w => w.word.length >= 8);
 
-    if (filtered.length === 0) filtered = [allWords[0]]; // Fallback
+    if (filtered.length === 0 && allWords.length > 0) filtered = [allWords[0]];
 
-    setWordsToPlay(filtered.sort(() => Math.random() - 0.5).slice(0, 5));
+    const shuffled = [...filtered].sort(() => Math.random() - 0.5).slice(0, 5);
+    setWordsToPlay(shuffled);
+    setCurrentWordIndex(0);
   }, [allWords, difficulty, isLoaded]);
 
-  const currentWord = wordsToPlay[currentWordIndex];
+  const currentWord = useMemo(() => wordsToPlay[currentWordIndex], [wordsToPlay, currentWordIndex]);
 
   const handleStart = () => {
+    if (!currentWord) return;
     setUserInput(new Array(currentWord.word.length).fill(""));
     setGameState("playing");
   };
@@ -46,22 +49,28 @@ export default function GamePage() {
 
     const char = e.key.toUpperCase();
     if (/^[A-Z]$/.test(char)) {
-      const nextEmpty = userInput.indexOf("");
-      if (nextEmpty !== -1) {
-        const newInput = [...userInput];
-        newInput[nextEmpty] = char;
-        setUserInput(newInput);
-      }
+      setUserInput(prev => {
+        const nextEmpty = prev.indexOf("");
+        if (nextEmpty !== -1) {
+          const next = [...prev];
+          next[nextEmpty] = char;
+          return next;
+        }
+        return prev;
+      });
     } else if (e.key === "Backspace") {
-      const lastFilled = userInput.lastIndexOf("");
-      const indexToDelete = lastFilled === -1 ? userInput.length - 1 : lastFilled - 1;
-      if (indexToDelete >= 0) {
-        const newInput = [...userInput];
-        newInput[indexToDelete] = "";
-        setUserInput(newInput);
-      }
+      setUserInput(prev => {
+        const lastFilled = prev.lastIndexOf("");
+        const indexToDelete = lastFilled === -1 ? prev.length - 1 : lastFilled - 1;
+        if (indexToDelete >= 0) {
+          const next = [...prev];
+          next[indexToDelete] = "";
+          return next;
+        }
+        return prev;
+      });
     }
-  }, [gameState, userInput]);
+  }, [gameState]);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyPress);
@@ -69,13 +78,13 @@ export default function GamePage() {
   }, [handleKeyPress]);
 
   useEffect(() => {
-    if (gameState === "playing" && !userInput.includes("")) {
+    if (gameState === "playing" && currentWord && !userInput.includes("")) {
       const typed = userInput.join("");
       if (typed === currentWord.word.toUpperCase()) {
         setGameState("success");
         addStars(1);
         addWordMastered();
-        addCorrectLetter(); // Simplifying reward: 1 per word + stats
+        addCorrectLetter();
       } else {
         setIsWrong(true);
         setTimeout(() => {
@@ -88,8 +97,9 @@ export default function GamePage() {
 
   const nextWord = () => {
     if (currentWordIndex + 1 < wordsToPlay.length) {
-      setCurrentWordIndex(prev => prev + 1);
-      setUserInput(new Array(wordsToPlay[currentWordIndex + 1].word.length).fill(""));
+      const nextIdx = currentWordIndex + 1;
+      setCurrentWordIndex(nextIdx);
+      setUserInput(new Array(wordsToPlay[nextIdx].word.length).fill(""));
       setGameState("intro");
     } else {
       setGameState("finished");
@@ -118,10 +128,9 @@ export default function GamePage() {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center space-y-12">
-        {gameState === "intro" && (
+        {gameState === "intro" && currentWord && (
           <div className="text-center space-y-8 animate-in fade-in zoom-in duration-500">
             <div className="relative w-64 h-64 mx-auto bg-white rounded-3xl shadow-xl border-4 border-primary flex items-center justify-center p-4">
-               {/* Placeholder for visual aid */}
                <div className="text-9xl font-black text-primary/10 absolute inset-0 flex items-center justify-center select-none">
                   ?
                </div>
@@ -140,7 +149,7 @@ export default function GamePage() {
           </div>
         )}
 
-        {gameState === "playing" && (
+        {gameState === "playing" && currentWord && (
           <div className={cn("text-center space-y-12 w-full", isWrong && "animate-wiggle")}>
             <div className="bg-white p-8 rounded-3xl shadow-lg border-2 border-primary/20 max-w-2xl mx-auto">
               <div className="flex items-start gap-4 text-left mb-8">
@@ -169,7 +178,7 @@ export default function GamePage() {
           </div>
         )}
 
-        {gameState === "success" && (
+        {gameState === "success" && currentWord && (
           <div className="text-center space-y-8 animate-in bounce-in duration-500">
             <div className="text-8xl animate-bounce-subtle">🌟</div>
             <div className="space-y-2">

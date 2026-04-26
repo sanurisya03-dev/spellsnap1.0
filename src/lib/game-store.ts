@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 
 export type Difficulty = "beginner" | "intermediate" | "advanced";
 
@@ -49,38 +49,51 @@ export function useGameStore() {
     setIsLoaded(true);
   }, []);
 
-  const saveStats = (newStats: UserStats) => {
-    setStats(newStats);
-    localStorage.setItem("spellsnap_stats", JSON.stringify(newStats));
-  };
+  const allWords = useMemo(() => [...DEFAULT_WORDS, ...customWords], [customWords]);
 
-  const addStars = (amount: number) => {
-    saveStats({ ...stats, stars: stats.stars + amount });
-  };
+  const addStars = useCallback((amount: number) => {
+    setStats(prev => {
+      const next = { ...prev, stars: prev.stars + amount };
+      localStorage.setItem("spellsnap_stats", JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
-  const addCorrectLetter = () => {
-    saveStats({ ...stats, correctLetters: stats.correctLetters + 1 });
-  };
+  const addCorrectLetter = useCallback(() => {
+    setStats(prev => {
+      const next = { ...prev, correctLetters: prev.correctLetters + 1 };
+      localStorage.setItem("spellsnap_stats", JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
-  const addWordMastered = () => {
-    saveStats({ ...stats, wordsMastered: stats.wordsMastered + 1 });
-  };
+  const addWordMastered = useCallback(() => {
+    setStats(prev => {
+      const next = { ...prev, wordsMastered: prev.wordsMastered + 1 };
+      localStorage.setItem("spellsnap_stats", JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
-  const addCustomWord = (word: WordItem) => {
-    const updated = [...customWords, word];
-    setCustomWords(updated);
-    localStorage.setItem("spellsnap_words", JSON.stringify(updated));
-  };
+  const addCustomWord = useCallback((word: WordItem) => {
+    setCustomWords(prev => {
+      const updated = [...prev, word];
+      localStorage.setItem("spellsnap_words", JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
 
-  const deleteCustomWord = (id: string) => {
-    const updated = customWords.filter(w => w.id !== id);
-    setCustomWords(updated);
-    localStorage.setItem("spellsnap_words", JSON.stringify(updated));
-  };
+  const deleteCustomWord = useCallback((id: string) => {
+    setCustomWords(prev => {
+      const updated = prev.filter(w => w.id !== id);
+      localStorage.setItem("spellsnap_words", JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
 
   return {
     stats,
-    allWords: [...DEFAULT_WORDS, ...customWords],
+    allWords,
     customWords,
     addStars,
     addCorrectLetter,

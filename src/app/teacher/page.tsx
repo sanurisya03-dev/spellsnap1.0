@@ -50,11 +50,9 @@ export default function TeacherDashboard() {
   const auth = useAuth();
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState("classes");
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newClassName, setNewClassName] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleSignIn = async () => {
@@ -120,7 +118,6 @@ export default function TeacherDashboard() {
       return;
     }
 
-    setIsCreating(true);
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
     const data = {
       name: newClassName.trim(),
@@ -131,23 +128,22 @@ export default function TeacherDashboard() {
     };
 
     const classroomRef = collection(db, 'classrooms');
-    
-    addDoc(classroomRef, data)
-      .then(() => {
-        toast({ title: "Class Created!", description: `The join code is ${code}` });
-        setNewClassName("");
-        setIsCreateOpen(false);
-      })
+    const newDocRef = doc(classroomRef); // Pre-generate the reference for optimistic logic
+
+    // OPTIMISTIC UI: Close dialog and show success immediately
+    setIsCreateOpen(false);
+    setNewClassName("");
+    toast({ title: "Class Created!", description: `The join code is ${code}` });
+
+    // Initiate write in background without blocking UI
+    setDoc(newDocRef, data)
       .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
-          path: classroomRef.path,
+          path: newDocRef.path,
           operation: 'create',
           requestResourceData: data,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => {
-        setIsCreating(false);
       });
   };
 
@@ -161,6 +157,7 @@ export default function TeacherDashboard() {
     
     const docRef = doc(db, 'classrooms', selectedClass.id);
     
+    // Non-blocking mutation
     setDoc(docRef, { assignedWordIds: next }, { merge: true })
       .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
@@ -252,7 +249,6 @@ export default function TeacherDashboard() {
                     value={newClassName} 
                     onChange={(e) => setNewClassName(e.target.value)} 
                     className="rounded-2xl border-4 border-muted focus:border-primary h-16 text-xl px-6 transition-all"
-                    disabled={isCreating}
                   />
                 </div>
               </div>
@@ -260,10 +256,9 @@ export default function TeacherDashboard() {
                 <Button 
                   onClick={handleCreateClass} 
                   className="w-full btn-bouncy bg-primary text-white h-16 rounded-2xl font-black text-xl shadow-xl"
-                  disabled={isCreating}
                 >
-                  {isCreating ? <Loader2 className="animate-spin h-6 w-6 mr-3" /> : <Check className="h-6 w-6 mr-3" />}
-                  {isCreating ? "CREATING..." : "CREATE CLASS NOW!"}
+                  <Check className="h-6 w-6 mr-3" />
+                  CREATE CLASS NOW!
                 </Button>
               </DialogFooter>
             </DialogContent>

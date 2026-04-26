@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -21,7 +22,7 @@ export interface WordItem {
   word: string;
   definition: string;
   exampleSentence: string;
-  imageHint?: string;
+  imageUrl?: string;
   theme?: string;
   userId?: string;
 }
@@ -33,12 +34,12 @@ export interface UserStats {
 }
 
 const DEFAULT_WORDS: WordItem[] = [
-  { id: "1", word: "CAT", definition: "A small furry animal with whiskers.", exampleSentence: "The cat is sleeping on the mat.", theme: "Animals" },
-  { id: "2", word: "APPLE", definition: "A round fruit with red or green skin.", exampleSentence: "I ate a crunchy red apple.", theme: "Food" },
-  { id: "3", word: "PENCIL", definition: "A tool used for writing or drawing.", exampleSentence: "Use your pencil to draw a circle.", theme: "School" },
-  { id: "4", word: "SPACE", definition: "The area beyond the Earth's atmosphere.", exampleSentence: "Astronauts travel into space.", theme: "Science" },
-  { id: "5", word: "BOOK", definition: "A set of printed pages held together.", exampleSentence: "I love reading a story book before bed.", theme: "School" },
-  { id: "6", word: "FRIEND", definition: "A person you know well and like.", exampleSentence: "She is my best friend at school.", theme: "General" },
+  { id: "1", word: "CAT", definition: "A small furry animal with whiskers.", exampleSentence: "The cat is sleeping on the mat.", theme: "Animals", imageUrl: "https://picsum.photos/seed/cat/600/400" },
+  { id: "2", word: "APPLE", definition: "A round fruit with red or green skin.", exampleSentence: "I ate a crunchy red apple.", theme: "Food", imageUrl: "https://picsum.photos/seed/apple/600/400" },
+  { id: "3", word: "PENCIL", definition: "A tool used for writing or drawing.", exampleSentence: "Use your pencil to draw a circle.", theme: "School", imageUrl: "https://picsum.photos/seed/pencil/600/400" },
+  { id: "4", word: "SPACE", definition: "The area beyond the Earth's atmosphere.", exampleSentence: "Astronauts travel into space.", theme: "Science", imageUrl: "https://picsum.photos/seed/space/600/400" },
+  { id: "5", word: "BOOK", definition: "A set of printed pages held together.", exampleSentence: "I love reading a story book before bed.", theme: "School", imageUrl: "https://picsum.photos/seed/book/600/400" },
+  { id: "6", word: "FRIEND", definition: "A person you know well and like.", exampleSentence: "She is my best friend at school.", theme: "General", imageUrl: "https://picsum.photos/seed/friend/600/400" },
 ];
 
 export function useGameStore() {
@@ -69,7 +70,6 @@ export function useGameStore() {
 
   const allWords = useMemo(() => {
     const custom = firebaseWords || [];
-    // Memoize the combined list to prevent re-renders in components depending on it
     return [...DEFAULT_WORDS, ...custom];
   }, [firebaseWords]);
 
@@ -135,7 +135,6 @@ export function useGameStore() {
       });
   }, [db]);
 
-  // isLoaded should be true if we're not waiting on critical user/words state
   const isLoaded = !userLoading && !wordsLoading && (!user || !statsLoading);
 
   return {

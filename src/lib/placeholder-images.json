@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "cat",
+      "description": "A cute cat",
+      "imageUrl": "https://picsum.photos/seed/cat/600/400",
+      "imageHint": "cat animal"
+    },
+    {
+      "id": "apple",
+      "description": "A fresh apple",
+      "imageUrl": "https://picsum.photos/seed/apple/600/400",
+      "imageHint": "apple fruit"
+    },
+    {
+      "id": "pencil",
+      "description": "A yellow pencil",
+      "imageUrl": "https://picsum.photos/seed/pencil/600/400",
+      "imageHint": "pencil school"
+    },
+    {
+      "id": "space",
+      "description": "The outer space",
+      "imageUrl": "https://picsum.photos/seed/space/600/400",
+      "imageHint": "space stars"
+    },
+    {
+      "id": "book",
+      "description": "A stack of books",
+      "imageUrl": "https://picsum.photos/seed/book/600/400",
+      "imageHint": "book library"
+    },
+    {
+      "id": "friend",
+      "description": "Friends playing",
+      "imageUrl": "https://picsum.photos/seed/friend/600/400",
+      "imageHint": "friends children"
+    }
+  ]
 }

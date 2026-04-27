@@ -49,6 +49,18 @@ export default function AdminDashboard() {
   
   const [revealedWordId, setRevealedWordId] = useState<string | null>(null);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const isScrolling = useRef(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      isScrolling.current = true;
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
+  }, []);
 
   if (!isLoaded) {
     return (
@@ -115,8 +127,11 @@ export default function AdminDashboard() {
   };
 
   const handleTouchStart = (id: string) => {
+    isScrolling.current = false;
     longPressTimer.current = setTimeout(() => {
-      setRevealedWordId(id);
+      if (!isScrolling.current) {
+        setRevealedWordId(id);
+      }
     }, 600);
   };
 
@@ -128,6 +143,11 @@ export default function AdminDashboard() {
 
   const handleDoubleClick = (id: string) => {
     setRevealedWordId(id);
+  };
+
+  const toggleReveal = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setRevealedWordId(revealedWordId === id ? null : id);
   };
 
   return (
@@ -217,7 +237,7 @@ export default function AdminDashboard() {
       <main className="space-y-8">
         <div className="bg-white/50 p-4 rounded-3xl border-2 border-dashed text-center">
           <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-            💡 Double-click or hold a card to Assign or Delete
+            💡 Tap the "..." button, double-click, or hold a card to Manage
           </p>
         </div>
 
@@ -231,7 +251,7 @@ export default function AdminDashboard() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
           {filteredWords.map((word) => {
             const isCustom = customWords.some(w => w.id === word.id);
             const isAssigned = activeClass?.assignedWordIds?.includes(word.id);
@@ -246,12 +266,12 @@ export default function AdminDashboard() {
                 className={cn(
                   "rounded-[3rem] border-8 shadow-2xl overflow-hidden flex flex-col group transition-all relative select-none cursor-pointer",
                   isAssigned ? "border-primary/40 bg-primary/5" : "border-white bg-background",
-                  isRevealed ? "scale-105 shadow-primary/20" : "hover:-translate-y-2"
+                  isRevealed ? "scale-105 shadow-primary/20 ring-4 ring-primary" : "hover:-translate-y-2"
                 )}
               >
                 {/* Actions Overlay */}
                 {isRevealed && (
-                  <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6 space-y-4 animate-in fade-in duration-200">
+                  <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-6 space-y-4 animate-in fade-in duration-200">
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -259,19 +279,19 @@ export default function AdminDashboard() {
                         e.stopPropagation();
                         setRevealedWordId(null);
                       }}
-                      className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full"
+                      className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full h-12 w-12"
                     >
                       <X className="h-8 w-8" />
                     </Button>
                     
-                    <h3 className="text-2xl font-black text-white uppercase">{word.word}</h3>
+                    <h3 className="text-3xl font-black text-white uppercase tracking-wider">{word.word}</h3>
                     
                     <div className="w-full flex flex-col gap-3">
                       {activeClass ? (
                         <Button 
                           onClick={(e) => handleAssign(e, word.id)}
                           className={cn(
-                            "w-full h-14 rounded-2xl font-black text-lg",
+                            "w-full h-16 rounded-2xl font-black text-xl shadow-xl",
                             isAssigned ? "bg-white text-primary" : "bg-primary text-white"
                           )}
                         >
@@ -279,9 +299,9 @@ export default function AdminDashboard() {
                           {isAssigned ? "REMOVE FROM CLASS" : "ASSIGN TO CLASS"}
                         </Button>
                       ) : (
-                        <div className="text-center space-y-2">
-                           <p className="text-white/60 text-[10px] font-bold">Join or Create a class to assign words</p>
-                           <Button variant="link" className="text-white text-xs" onClick={() => router.push("/")}>Go to Lobby</Button>
+                        <div className="text-center space-y-3 p-4 bg-white/10 rounded-2xl">
+                           <p className="text-white font-bold text-sm">Join or Create a class first</p>
+                           <Button variant="secondary" className="w-full h-12 rounded-xl" onClick={() => router.push("/teacher")}>Teacher Setup</Button>
                         </div>
                       )}
                       
@@ -289,7 +309,7 @@ export default function AdminDashboard() {
                         <Button 
                           variant="destructive" 
                           onClick={(e) => handleDelete(e, word.id, word.word)}
-                          className="w-full h-14 rounded-2xl font-black text-lg"
+                          className="w-full h-16 rounded-2xl font-black text-xl shadow-xl"
                         >
                           <Trash2 className="mr-2" /> DELETE WORD
                         </Button>
@@ -307,15 +327,18 @@ export default function AdminDashboard() {
                     unoptimized={word.imageUrl?.startsWith('data:')}
                   />
                   <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                    <Badge className="bg-white/90 text-primary font-black uppercase text-[10px]">{word.difficulty}</Badge>
-                    {isCustom && <Badge className="bg-accent text-white font-black uppercase text-[10px]">Custom</Badge>}
-                    {isAssigned && <Badge className="bg-primary text-white font-black uppercase text-[10px]">Assigned</Badge>}
+                    <Badge className="bg-white/90 text-primary font-black uppercase text-[10px] shadow-sm">{word.difficulty}</Badge>
+                    {isCustom && <Badge className="bg-accent text-white font-black uppercase text-[10px] shadow-sm">Custom</Badge>}
+                    {isAssigned && <Badge className="bg-primary text-white font-black uppercase text-[10px] shadow-sm">Assigned</Badge>}
                   </div>
 
                   <div className="absolute top-4 right-4">
-                    <div className="bg-white/80 p-2 rounded-full shadow-lg">
-                      <MoreVertical className="h-5 w-5 text-muted-foreground" />
-                    </div>
+                    <Button 
+                      onClick={(e) => toggleReveal(e, word.id)}
+                      className="bg-white/90 p-2 rounded-full shadow-lg h-12 w-12 hover:bg-white text-primary flex items-center justify-center border-2 border-primary/20"
+                    >
+                      <MoreVertical className="h-6 w-6" />
+                    </Button>
                   </div>
                 </div>
 
@@ -326,11 +349,11 @@ export default function AdminDashboard() {
                       {word.audioUrl && <Volume2 className="h-5 w-5 text-accent" />}
                     </div>
                   </div>
-                  {word.phonemes && <p className="text-xs font-black text-accent/70 tracking-widest">{word.phonemes}</p>}
+                  {word.phonemes && <p className="text-xs font-black text-accent/70 tracking-widest uppercase">{word.phonemes}</p>}
                 </CardHeader>
                 <CardContent className="p-6 pt-2 space-y-4 flex-1">
-                  <p className="text-sm italic text-muted-foreground">"{word.definition}"</p>
-                  <p className="text-xs font-medium bg-muted/30 p-3 rounded-xl border border-dashed">{word.exampleSentence}</p>
+                  <p className="text-sm italic text-muted-foreground font-medium">"{word.definition}"</p>
+                  <p className="text-xs font-bold bg-muted/30 p-3 rounded-xl border border-dashed text-foreground/80">{word.exampleSentence}</p>
                 </CardContent>
               </Card>
             );

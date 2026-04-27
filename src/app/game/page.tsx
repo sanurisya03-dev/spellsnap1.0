@@ -39,10 +39,19 @@ export default function GamePage() {
 
   const currentWord = useMemo(() => wordsToPlay[currentWordIndex], [wordsToPlay, currentWordIndex]);
 
+  const speakWithBrowser = useCallback((text: string) => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text.toLowerCase());
+      utterance.rate = 0.8;
+      utterance.pitch = 1.1;
+      window.speechSynthesis.speak(utterance);
+    }
+  }, []);
+
   const playAudio = useCallback(() => {
     if (!currentWord) return;
 
-    // 1. Try playing AI Generated Audio if it exists
     if (currentWord.audioUrl) {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -55,21 +64,9 @@ export default function GamePage() {
         speakWithBrowser(currentWord.word);
       });
     } else {
-      // 2. Fallback to Browser Text-to-Speech
       speakWithBrowser(currentWord.word);
     }
-  }, [currentWord]);
-
-  const speakWithBrowser = (text: string) => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      // Cancel any ongoing speech
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text.toLowerCase());
-      utterance.rate = 0.8; // Slightly slower for clarity
-      utterance.pitch = 1.1; // Friendly pitch
-      window.speechSynthesis.speak(utterance);
-    }
-  };
+  }, [currentWord, speakWithBrowser]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -236,7 +233,7 @@ export default function GamePage() {
                 </div>
                 <button 
                   onClick={playAudio}
-                  className="group relative text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-primary uppercase sparkle-text leading-tight break-all transition-transform active:scale-95 text-left"
+                  className="group relative text-[min(10vw,6rem)] font-black text-primary uppercase sparkle-text leading-tight break-all transition-transform active:scale-95 text-left"
                 >
                   {currentWord.word}
                 </button>
@@ -268,7 +265,7 @@ export default function GamePage() {
             <div className="relative inline-block max-w-full">
               <button 
                 onClick={playAudio}
-                className="group relative bg-white p-6 md:p-20 rounded-[2rem] md:rounded-[5rem] shadow-3xl border-4 md:border-12 border-primary/20 overflow-hidden flex flex-col items-center justify-center min-h-[150px] md:min-h-[400px] transition-all active:scale-95"
+                className="group relative bg-white p-6 md:p-20 rounded-[2rem] md:rounded-[5rem] shadow-3xl border-4 md:border-12 border-primary/20 overflow-hidden flex flex-col items-center justify-center min-h-[150px] md:min-h-[400px] transition-all active:scale-95 w-full md:w-auto"
               >
                  <p className="text-[min(15vw,8rem)] font-black text-primary tracking-tighter uppercase sparkle-text break-all leading-none">
                    {currentWord.word}

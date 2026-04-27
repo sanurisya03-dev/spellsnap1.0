@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -129,6 +130,7 @@ export default function TeacherDashboard() {
     const classroomRef = collection(db, 'classrooms');
     const newDocRef = doc(classroomRef);
 
+    // Optimistic UI update: Close dialog immediately to prevent "infinite loading" feel
     setIsCreateOpen(false);
     setNewClassName("");
     toast({ title: "Class Created!", description: `The join code is ${code}` });

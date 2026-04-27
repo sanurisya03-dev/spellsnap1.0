@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, ArrowLeft, Search, GraduationCap, Loader2, Volume2, Sparkles, CheckCircle, Circle, MoreVertical, X } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Search, GraduationCap, Loader2, Volume2, Sparkles, CheckCircle, Circle, MoreVertical, X, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -26,10 +26,12 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/firebase";
 
 export default function AdminDashboard() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useUser();
   const { allWords, customWords, addCustomWord, deleteCustomWord, isLoaded, activeClass, toggleWordAssignment } = useGameStore();
   
   const [searchTerm, setSearchTerm] = useState("");
@@ -180,7 +182,12 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="font-bold">Spelling Word</Label>
-                  <Input placeholder="E.g., COMPUTER" value={newWord.word} onChange={e => setNewWord({...newWord, word: e.target.value.toUpperCase()})} />
+                  <input
+                    placeholder="E.g., COMPUTER"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                    value={newWord.word}
+                    onChange={e => setNewWord({...newWord, word: e.target.value.toUpperCase()})}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label className="font-bold">Difficulty</Label>
@@ -203,7 +210,12 @@ export default function AdminDashboard() {
                       {isGeneratingImage ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />} AI Art
                     </Button>
                   </div>
-                  <Input placeholder="https://..." value={newWord.imageUrl} onChange={e => setNewWord({...newWord, imageUrl: e.target.value})} />
+                  <input
+                    placeholder="https://..."
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                    value={newWord.imageUrl}
+                    onChange={e => setNewWord({...newWord, imageUrl: e.target.value})}
+                  />
                 </div>
                 <div className="space-y-2">
                    <div className="flex justify-between items-center">
@@ -212,7 +224,12 @@ export default function AdminDashboard() {
                       {isGeneratingPronunciation ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : <Volume2 className="h-4 w-4 mr-1" />} AI Speak
                     </Button>
                   </div>
-                  <Input placeholder="/ipa-phonetics/" value={newWord.phonemes} onChange={e => setNewWord({...newWord, phonemes: e.target.value})} />
+                  <input
+                    placeholder="/ipa-phonetics/"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                    value={newWord.phonemes}
+                    onChange={e => setNewWord({...newWord, phonemes: e.target.value})}
+                  />
                 </div>
               </div>
 
@@ -237,15 +254,15 @@ export default function AdminDashboard() {
       <main className="space-y-8">
         <div className="bg-white/50 p-4 rounded-3xl border-2 border-dashed text-center">
           <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-            💡 Tap the "..." button, double-click, or hold a card to Manage
+            💡 Tap "...", double-click, or hold a card to Manage Assignment & Deletion
           </p>
         </div>
 
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input 
+          <input 
             placeholder="Search words, themes, or difficulty..." 
-            className="pl-12 h-16 rounded-3xl border-4 border-white shadow-xl text-lg font-bold"
+            className="flex w-full rounded-3xl border-4 border-white bg-background pl-12 h-16 shadow-xl text-lg font-bold ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -271,7 +288,7 @@ export default function AdminDashboard() {
               >
                 {/* Actions Overlay */}
                 {isRevealed && (
-                  <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-6 space-y-4 animate-in fade-in duration-200">
+                  <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 space-y-6 animate-in fade-in zoom-in duration-200">
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -284,35 +301,48 @@ export default function AdminDashboard() {
                       <X className="h-8 w-8" />
                     </Button>
                     
-                    <h3 className="text-3xl font-black text-white uppercase tracking-wider">{word.word}</h3>
+                    <div className="text-center">
+                      <h3 className="text-4xl font-black text-white uppercase tracking-wider">{word.word}</h3>
+                      <p className="text-white/60 text-xs font-bold uppercase tracking-widest mt-1">Management Options</p>
+                    </div>
                     
-                    <div className="w-full flex flex-col gap-3">
-                      {activeClass ? (
-                        <Button 
-                          onClick={(e) => handleAssign(e, word.id)}
-                          className={cn(
-                            "w-full h-16 rounded-2xl font-black text-xl shadow-xl",
-                            isAssigned ? "bg-white text-primary" : "bg-primary text-white"
+                    <div className="w-full flex flex-col gap-4">
+                      {user ? (
+                        <>
+                          {activeClass ? (
+                            <Button 
+                              onClick={(e) => handleAssign(e, word.id)}
+                              className={cn(
+                                "w-full h-16 rounded-2xl font-black text-xl shadow-xl transition-all active:scale-95",
+                                isAssigned ? "bg-white text-primary hover:bg-white/90" : "bg-primary text-white hover:bg-primary/90"
+                              )}
+                            >
+                              {isAssigned ? <X className="mr-2" /> : <CheckCircle className="mr-2" />}
+                              {isAssigned ? "REMOVE FROM CLASS" : "ASSIGN TO CLASS"}
+                            </Button>
+                          ) : (
+                            <div className="text-center space-y-3 p-4 bg-white/10 rounded-2xl border border-white/20">
+                               <p className="text-white font-bold text-sm">Join or Create a class first</p>
+                               <Button variant="secondary" className="w-full h-12 rounded-xl" onClick={() => router.push("/teacher")}>Go to Teacher Setup</Button>
+                            </div>
                           )}
-                        >
-                          {isAssigned ? <X className="mr-2" /> : <CheckCircle className="mr-2" />}
-                          {isAssigned ? "REMOVE FROM CLASS" : "ASSIGN TO CLASS"}
-                        </Button>
+                          
+                          {isCustom && (
+                            <Button 
+                              variant="destructive" 
+                              onClick={(e) => handleDelete(e, word.id, word.word)}
+                              className="w-full h-16 rounded-2xl font-black text-xl shadow-xl transition-all active:scale-95"
+                            >
+                              <Trash2 className="mr-2" /> DELETE WORD
+                            </Button>
+                          )}
+                        </>
                       ) : (
-                        <div className="text-center space-y-3 p-4 bg-white/10 rounded-2xl">
-                           <p className="text-white font-bold text-sm">Join or Create a class first</p>
-                           <Button variant="secondary" className="w-full h-12 rounded-xl" onClick={() => router.push("/teacher")}>Teacher Setup</Button>
+                        <div className="text-center space-y-4 p-6 bg-white/10 rounded-3xl border border-white/20">
+                          <Lock className="h-10 w-10 text-white/50 mx-auto" />
+                          <p className="text-white font-black">Login Required</p>
+                          <Button className="w-full h-12 rounded-xl bg-primary text-white font-bold" onClick={() => router.push("/")}>Sign In Now</Button>
                         </div>
-                      )}
-                      
-                      {isCustom && (
-                        <Button 
-                          variant="destructive" 
-                          onClick={(e) => handleDelete(e, word.id, word.word)}
-                          className="w-full h-16 rounded-2xl font-black text-xl shadow-xl"
-                        >
-                          <Trash2 className="mr-2" /> DELETE WORD
-                        </Button>
                       )}
                     </div>
                   </div>
@@ -335,7 +365,7 @@ export default function AdminDashboard() {
                   <div className="absolute top-4 right-4">
                     <Button 
                       onClick={(e) => toggleReveal(e, word.id)}
-                      className="bg-white/90 p-2 rounded-full shadow-lg h-12 w-12 hover:bg-white text-primary flex items-center justify-center border-2 border-primary/20"
+                      className="bg-white/90 p-2 rounded-full shadow-lg h-12 w-12 hover:bg-white text-primary flex items-center justify-center border-2 border-primary/20 transition-transform active:scale-90"
                     >
                       <MoreVertical className="h-6 w-6" />
                     </Button>
@@ -344,16 +374,18 @@ export default function AdminDashboard() {
 
                 <CardHeader className="p-6 pb-2">
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-3xl font-black text-primary uppercase">{word.word}</CardTitle>
+                    <CardTitle className="text-3xl font-black text-primary uppercase tracking-tight">{word.word}</CardTitle>
                     <div className="flex gap-2">
                       {word.audioUrl && <Volume2 className="h-5 w-5 text-accent" />}
                     </div>
                   </div>
-                  {word.phonemes && <p className="text-xs font-black text-accent/70 tracking-widest uppercase">{word.phonemes}</p>}
+                  {word.phonemes && <p className="text-[10px] font-black text-accent/70 tracking-[0.2em] uppercase">{word.phonemes}</p>}
                 </CardHeader>
                 <CardContent className="p-6 pt-2 space-y-4 flex-1">
-                  <p className="text-sm italic text-muted-foreground font-medium">"{word.definition}"</p>
-                  <p className="text-xs font-bold bg-muted/30 p-3 rounded-xl border border-dashed text-foreground/80">{word.exampleSentence}</p>
+                  <p className="text-sm italic text-muted-foreground font-medium leading-relaxed">"{word.definition}"</p>
+                  <div className="bg-muted/30 p-4 rounded-2xl border-2 border-dashed border-white">
+                    <p className="text-xs font-bold text-foreground/80 leading-snug">{word.exampleSentence}</p>
+                  </div>
                 </CardContent>
               </Card>
             );

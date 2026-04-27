@@ -39,6 +39,38 @@ export default function GamePage() {
 
   const currentWord = useMemo(() => wordsToPlay[currentWordIndex], [wordsToPlay, currentWordIndex]);
 
+  const playAudio = useCallback(() => {
+    if (!currentWord) return;
+
+    // 1. Try playing AI Generated Audio if it exists
+    if (currentWord.audioUrl) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      const audio = new Audio(currentWord.audioUrl);
+      audioRef.current = audio;
+      audio.play().catch(err => {
+        console.warn("AI Audio failed, falling back to browser TTS", err);
+        speakWithBrowser(currentWord.word);
+      });
+    } else {
+      // 2. Fallback to Browser Text-to-Speech
+      speakWithBrowser(currentWord.word);
+    }
+  }, [currentWord]);
+
+  const speakWithBrowser = (text: string) => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text.toLowerCase());
+      utterance.rate = 0.8; // Slightly slower for clarity
+      utterance.pitch = 1.1; // Friendly pitch
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (gameState === "memorizing" && timer > 0) {
@@ -49,23 +81,9 @@ export default function GamePage() {
     return () => clearInterval(interval);
   }, [gameState, timer]);
 
-  const playAudio = useCallback(() => {
-    if (currentWord?.audioUrl) {
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play();
-      } else {
-        const audio = new Audio(currentWord.audioUrl);
-        audioRef.current = audio;
-        audio.play();
-      }
-    }
-  }, [currentWord]);
-
   const handleStartMemorizing = () => {
     setTimer(10);
     setGameState("memorizing");
-    // Auto-play audio when starting memorization
     playAudio();
   };
 
@@ -207,25 +225,20 @@ export default function GamePage() {
                   <div className="bg-primary/10 inline-block px-3 md:px-6 py-1 md:py-2 rounded-full text-primary font-black uppercase tracking-widest text-[10px] md:text-sm">
                     Ready to Learn?
                   </div>
-                  {currentWord.audioUrl && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={playAudio} 
-                      className="rounded-full bg-accent h-10 w-10 md:h-14 md:w-14 text-white hover:bg-accent/90 shadow-lg animate-bounce-subtle"
-                    >
-                      <Volume2 className="h-5 w-5 md:h-8 md:w-8" />
-                    </Button>
-                  )}
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={playAudio} 
+                    className="rounded-full bg-accent h-10 w-10 md:h-14 md:w-14 text-white hover:bg-accent/90 shadow-lg animate-bounce-subtle"
+                  >
+                    <Volume2 className="h-5 w-5 md:h-8 md:w-8" />
+                  </Button>
                 </div>
                 <button 
                   onClick={playAudio}
                   className="group relative text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-primary uppercase sparkle-text leading-tight break-all transition-transform active:scale-95 text-left"
                 >
                   {currentWord.word}
-                  <span className="absolute -top-4 -right-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Volume2 className="h-6 w-6 text-accent" />
-                  </span>
                 </button>
                 {currentWord.phonemes && (
                    <p className="text-xl md:text-3xl font-black text-accent/80 tracking-widest -mt-2 md:-mt-4">
@@ -289,16 +302,14 @@ export default function GamePage() {
                   <div className="h-16 w-16 md:h-32 md:w-32 relative rounded-xl md:rounded-3xl overflow-hidden border-2 md:border-4 border-white shadow-xl bg-muted">
                     <img src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word.toLowerCase()}/200/200`} alt="hint" className="object-cover h-full w-full" />
                   </div>
-                  {currentWord.audioUrl && (
-                    <Button 
-                      size="lg" 
-                      variant="secondary" 
-                      onClick={playAudio} 
-                      className="rounded-full h-12 w-12 md:h-20 md:w-20 bg-accent text-white shadow-lg border-2 md:border-4 border-white hover:bg-accent/90 animate-pulse"
-                    >
-                      <Volume2 className="h-6 w-6 md:h-10 md:w-10" />
-                    </Button>
-                  )}
+                  <Button 
+                    size="lg" 
+                    variant="secondary" 
+                    onClick={playAudio} 
+                    className="rounded-full h-12 w-12 md:h-20 md:w-20 bg-accent text-white shadow-lg border-2 md:border-4 border-white hover:bg-accent/90 animate-pulse"
+                  >
+                    <Volume2 className="h-6 w-6 md:h-10 md:w-10" />
+                  </Button>
                 </div>
                 <p className="text-sm md:text-3xl font-bold italic text-muted-foreground break-words max-w-md">"{currentWord.definition}"</p>
                 {currentWord.phonemes && <p className="text-lg md:text-2xl font-black text-accent/60">{currentWord.phonemes}</p>}

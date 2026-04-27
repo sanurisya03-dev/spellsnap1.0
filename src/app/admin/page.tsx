@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, ArrowLeft, Search, GraduationCap, Loader2, Volume2, Sparkles, Check } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Search, GraduationCap, Loader2, Volume2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -243,11 +243,6 @@ export default function AdminDashboard() {
               </Card>
             );
           })}
-          {filteredWords.length === 0 && (
-            <div className="col-span-full py-20 text-center bg-white/40 rounded-[4rem] border-4 border-dashed border-white">
-               <p className="text-2xl font-black text-muted-foreground">No words match your search!</p>
-            </div>
-          )}
         </div>
       </main>
     </div>

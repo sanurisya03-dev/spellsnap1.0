@@ -3,7 +3,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { ArrowLeft, Star, RefreshCcw, Info, Loader2, Cloud, Zap, Clock, Volume2 } from "lucide-react";
+import { ArrowLeft, Star, RefreshCcw, Info, Loader2, Cloud, Clock, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGameStore, type WordItem, type Difficulty } from "@/lib/game-store";
 import { Progress } from "@/components/ui/progress";
@@ -188,13 +188,13 @@ export default function GamePage() {
         <Cloud className="floating-element text-accent/20" size={120} style={{ bottom: '20%', right: '15%' }} />
       </div>
 
-      <header className="max-w-5xl w-full mx-auto flex flex-wrap justify-between items-center mb-6 md:mb-12 z-20 gap-4">
-        <Button variant="ghost" onClick={() => router.push("/")} className="btn-bouncy bg-white/90 backdrop-blur-xl px-4 md:px-8 h-10 md:h-14 shadow-xl border-2 md:border-4 border-white text-xs md:text-lg">
+      <header className="max-w-5xl w-full mx-auto flex justify-between items-center mb-6 md:mb-12 z-20 gap-4">
+        <Button variant="ghost" onClick={() => router.push("/")} className="btn-bouncy bg-white/90 backdrop-blur-xl px-4 md:px-8 h-10 md:h-14 shadow-xl border-4 border-white text-xs md:text-lg">
           <ArrowLeft className="h-4 w-4 md:h-6 md:w-6 mr-1.5 md:mr-3" /> Stop
         </Button>
-        <div className="flex-1 min-w-[150px] md:max-w-[400px]">
+        <div className="flex-1 md:max-w-[400px]">
           <div className="flex justify-between text-[8px] md:text-xs font-black uppercase text-muted-foreground mb-1.5 md:mb-3 tracking-widest">
-            <span className="truncate max-w-[100px] md:max-w-none">{activeClass ? `Class: ${activeClass.name}` : "Practice"}</span>
+            <span>{activeClass ? `Class: ${activeClass.name}` : "Practice"}</span>
             <span>{currentWordIndex + 1} / {wordsToPlay.length}</span>
           </div>
           <Progress value={((currentWordIndex + 1) / (wordsToPlay.length || 1)) * 100} className="h-3 md:h-6 bg-white border-2 md:border-4 border-primary/20 rounded-full" />
@@ -233,7 +233,7 @@ export default function GamePage() {
                 </div>
                 <button 
                   onClick={playAudio}
-                  className="group relative text-[min(10vw,6rem)] font-black text-primary uppercase sparkle-text leading-tight break-all transition-transform active:scale-95 text-left"
+                  className="group relative text-[min(12vw,6rem)] font-black text-primary uppercase sparkle-text leading-tight break-all transition-transform active:scale-95 text-left"
                 >
                   {currentWord.word}
                 </button>
@@ -280,7 +280,6 @@ export default function GamePage() {
                  </div>
               </button>
               <div className="absolute -top-4 -right-4 md:-top-12 md:-right-12 bg-accent h-12 w-12 md:h-32 md:w-32 rounded-full shadow-2xl border-2 md:border-8 border-white flex flex-col items-center justify-center animate-bounce-subtle">
-                  <Clock className="h-3 w-3 md:h-8 md:w-8 text-white mb-0.5 md:mb-1" />
                   <span className="text-lg md:text-5xl font-black text-white">{timer}</span>
               </div>
             </div>
@@ -309,7 +308,6 @@ export default function GamePage() {
                   </Button>
                 </div>
                 <p className="text-sm md:text-3xl font-bold italic text-muted-foreground break-words max-w-md">"{currentWord.definition}"</p>
-                {currentWord.phonemes && <p className="text-lg md:text-2xl font-black text-accent/60">{currentWord.phonemes}</p>}
               </div>
 
               <div className="flex flex-wrap justify-center gap-1.5 md:gap-4 overflow-y-auto max-h-[35vh] p-1">

@@ -17,7 +17,6 @@ import {
   Copy,
   LayoutDashboard,
   LogIn,
-  ExternalLink,
   Filter,
   CheckCircle,
   Circle
@@ -38,10 +37,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+import { FirestorePermissionError } from '@/firebase/errors';
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -261,8 +259,7 @@ export default function TeacherDashboard() {
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input placeholder="Search word bank..." value={assignmentSearch} onChange={e => setAssignmentSearch(e.target.value)} className="pl-9 rounded-xl" />
                     </div>
-                    <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-                      <Filter className="h-4 w-4 text-muted-foreground hidden md:block" />
+                    <div className="flex items-center gap-2">
                       {(["all", "beginner", "intermediate", "advanced"] as const).map(lvl => (
                         <Button 
                           key={lvl} 
@@ -275,9 +272,9 @@ export default function TeacherDashboard() {
                         </Button>
                       ))}
                     </div>
-                    <div className="flex gap-2 shrink-0">
-                      <Button variant="outline" size="sm" onClick={handleAssignAll} className="rounded-xl font-bold border-2">Assign Page</Button>
-                      <Button variant="ghost" size="sm" onClick={handleRemoveAll} className="rounded-xl font-bold text-destructive">Clear Page</Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={handleAssignAll} className="rounded-xl font-bold border-2">Assign All</Button>
+                      <Button variant="ghost" size="sm" onClick={handleRemoveAll} className="rounded-xl font-bold text-destructive">Clear All</Button>
                     </div>
                   </div>
 
@@ -333,12 +330,6 @@ export default function TeacherDashboard() {
                       </CardContent>
                     </Card>
                   ))}
-                  {pupils?.length === 0 && (
-                    <div className="text-center py-20 bg-white/40 rounded-[4rem] border-4 border-dashed border-white flex flex-col items-center gap-4">
-                       <Users className="h-16 w-16 opacity-20" />
-                       <p className="text-xl font-bold text-muted-foreground">Share code {selectedClass.code} with your pupils!</p>
-                    </div>
-                  )}
                 </TabsContent>
               </Tabs>
             </div>

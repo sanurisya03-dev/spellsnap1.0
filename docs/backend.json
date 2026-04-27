@@ -16,6 +16,8 @@
           "description": "The manually assigned difficulty level for this word"
         },
         "imageUrl": { "type": "string", "description": "URL of the image representing the word" },
+        "phonemes": { "type": "string", "description": "IPA phonetic representation of the word" },
+        "audioUrl": { "type": "string", "description": "Data URI of the pronunciation audio" },
         "userId": { "type": "string", "description": "The user who created this custom word" }
       },
       "required": ["word", "definition", "difficulty"]

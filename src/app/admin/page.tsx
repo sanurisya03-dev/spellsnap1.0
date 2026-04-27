@@ -1,8 +1,9 @@
+
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, ArrowLeft, Search, GraduationCap, Loader2, Image as ImageIcon, Sparkles, BrainCircuit } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Search, GraduationCap, Loader2, Image as ImageIcon, Sparkles, BrainCircuit, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -20,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { generateWordImage } from "@/ai/flows/generate-word-image";
+import { getPronunciation } from "@/ai/flows/pronunciation-flow";
 import Image from "next/image";
 
 export default function AdminDashboard() {
@@ -33,10 +35,13 @@ export default function AdminDashboard() {
     exampleSentence: "", 
     theme: "", 
     imageUrl: "",
+    phonemes: "",
+    audioUrl: "",
     difficulty: "beginner" as Difficulty
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isGeneratingPronunciation, setIsGeneratingPronunciation] = useState(false);
 
   if (!isLoaded) {
     return (
@@ -51,7 +56,7 @@ export default function AdminDashboard() {
     addCustomWord({
       ...newWord
     });
-    setNewWord({ word: "", definition: "", exampleSentence: "", theme: "", imageUrl: "", difficulty: "beginner" });
+    setNewWord({ word: "", definition: "", exampleSentence: "", theme: "", imageUrl: "", phonemes: "", audioUrl: "", difficulty: "beginner" });
     setIsDialogOpen(false);
   };
 
@@ -65,6 +70,19 @@ export default function AdminDashboard() {
       console.error("Failed to generate image:", error);
     } finally {
       setIsGeneratingImage(false);
+    }
+  };
+
+  const handleAIGeneratePronunciation = async () => {
+    if (!newWord.word) return;
+    setIsGeneratingPronunciation(true);
+    try {
+      const { phonemes, audioUrl } = await getPronunciation({ word: newWord.word });
+      setNewWord(prev => ({ ...prev, phonemes, audioUrl }));
+    } catch (error) {
+      console.error("Failed to generate pronunciation:", error);
+    } finally {
+      setIsGeneratingPronunciation(false);
     }
   };
 
@@ -141,28 +159,42 @@ export default function AdminDashboard() {
                   />
                 </div>
               </div>
-              <div className="space-y-1.5 sm:space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="imageUrl" className="font-bold text-xs sm:text-sm">Image URL (or AI Magic)</Label>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={handleAIGenerateImage} 
-                    disabled={!newWord.word || isGeneratingImage}
-                    className="h-7 text-[10px] font-black text-accent hover:bg-accent/10"
-                  >
-                    {isGeneratingImage ? <Loader2 className="animate-spin h-3 w-3 mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
-                    AI Magic
-                  </Button>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="imageUrl" className="font-bold text-xs sm:text-sm">Image</Label>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleAIGenerateImage} 
+                      disabled={!newWord.word || isGeneratingImage}
+                      className="h-7 text-[10px] font-black text-accent hover:bg-accent/10"
+                    >
+                      {isGeneratingImage ? <Loader2 className="animate-spin h-3 w-3 mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                      AI Image
+                    </Button>
+                  </div>
+                  <Input id="imageUrl" placeholder="URL" value={newWord.imageUrl} onChange={(e) => setNewWord({...newWord, imageUrl: e.target.value})} className="h-10 sm:h-12" />
                 </div>
-                <Input 
-                  id="imageUrl" 
-                  placeholder="Paste URL or click AI Magic" 
-                  value={newWord.imageUrl}
-                  onChange={(e) => setNewWord({...newWord, imageUrl: e.target.value})}
-                  className="h-10 sm:h-12"
-                />
+                <div className="space-y-1.5 sm:space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="phonemes" className="font-bold text-xs sm:text-sm">Phonemes</Label>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleAIGeneratePronunciation} 
+                      disabled={!newWord.word || isGeneratingPronunciation}
+                      className="h-7 text-[10px] font-black text-secondary hover:bg-secondary/10"
+                    >
+                      {isGeneratingPronunciation ? <Loader2 className="animate-spin h-3 w-3 mr-1" /> : <Volume2 className="h-3 w-3 mr-1" />}
+                      AI Sound
+                    </Button>
+                  </div>
+                  <Input id="phonemes" placeholder="/IPA/" value={newWord.phonemes} onChange={(e) => setNewWord({...newWord, phonemes: e.target.value})} className="h-10 sm:h-12" />
+                </div>
               </div>
+
               <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="definition" className="font-bold text-xs sm:text-sm">Simple Definition</Label>
                 <Textarea 
@@ -229,17 +261,23 @@ export default function AdminDashboard() {
               </div>
               <CardHeader className="pb-1 sm:pb-2 p-4">
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-xl sm:text-2xl font-black text-primary uppercase truncate pr-2">{word.word}</CardTitle>
-                  {customWords.some(w => w.id === word.id) && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => deleteCustomWord(word.id)}
-                      className="text-destructive hover:bg-destructive/10 shrink-0 h-8 w-8"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <div>
+                    <CardTitle className="text-xl sm:text-2xl font-black text-primary uppercase truncate pr-2">{word.word}</CardTitle>
+                    {word.phonemes && <p className="text-[10px] font-black text-accent/80 tracking-widest">{word.phonemes}</p>}
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    {word.audioUrl && <Volume2 className="h-4 w-4 text-accent" />}
+                    {customWords.some(w => w.id === word.id) && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => deleteCustomWord(word.id)}
+                        className="text-destructive hover:bg-destructive/10 h-8 w-8"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-0 p-4 space-y-2 sm:space-y-3 flex-1">

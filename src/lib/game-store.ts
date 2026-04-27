@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -27,6 +28,8 @@ export interface WordItem {
   exampleSentence: string;
   difficulty: Difficulty;
   imageUrl?: string;
+  phonemes?: string;
+  audioUrl?: string;
   theme?: string;
   userId?: string;
 }
@@ -54,14 +57,14 @@ export interface PupilProgress {
 }
 
 const DEFAULT_WORDS: WordItem[] = [
-  { id: "1", word: "CAT", difficulty: "beginner", definition: "A small furry animal with whiskers.", exampleSentence: "The cat is sleeping on the mat.", theme: "Animals", imageUrl: "https://picsum.photos/seed/cat/600/400" },
-  { id: "2", word: "APPLE", difficulty: "beginner", definition: "A round fruit with red or green skin.", exampleSentence: "I ate a crunchy red apple.", theme: "Food", imageUrl: "https://picsum.photos/seed/apple/600/400" },
-  { id: "3", word: "PENCIL", difficulty: "intermediate", definition: "A tool used for writing or drawing.", exampleSentence: "Use your pencil to draw a circle.", theme: "School", imageUrl: "https://picsum.photos/seed/pencil/600/400" },
-  { id: "4", word: "SPACE", difficulty: "intermediate", definition: "The area beyond the Earth's atmosphere.", exampleSentence: "Astronauts travel into space.", theme: "Science", imageUrl: "https://picsum.photos/seed/space/600/400" },
-  { id: "5", word: "BOOK", difficulty: "beginner", definition: "A set of printed pages held together.", exampleSentence: "I love reading a story book before bed.", theme: "School", imageUrl: "https://picsum.photos/seed/book/600/400" },
-  { id: "6", word: "FRIEND", difficulty: "intermediate", definition: "A person you know well and like.", exampleSentence: "She is my best friend at school.", theme: "General", imageUrl: "https://picsum.photos/seed/friend/600/400" },
-  { id: "7", word: "ELEPHANT", difficulty: "advanced", definition: "A very large gray animal with a long trunk.", exampleSentence: "The elephant sprayed water with its trunk.", theme: "Animals", imageUrl: "https://picsum.photos/seed/elephant/600/400" },
-  { id: "8", word: "MOUNTAIN", difficulty: "advanced", definition: "A very high hill often with snow on top.", exampleSentence: "We climbed to the top of the mountain.", theme: "Nature", imageUrl: "https://picsum.photos/seed/mountain/600/400" },
+  { id: "1", word: "CAT", difficulty: "beginner", definition: "A small furry animal with whiskers.", exampleSentence: "The cat is sleeping on the mat.", theme: "Animals", imageUrl: "https://picsum.photos/seed/cat/600/400", phonemes: "/kæt/" },
+  { id: "2", word: "APPLE", difficulty: "beginner", definition: "A round fruit with red or green skin.", exampleSentence: "I ate a crunchy red apple.", theme: "Food", imageUrl: "https://picsum.photos/seed/apple/600/400", phonemes: "/ˈæpəl/" },
+  { id: "3", word: "PENCIL", difficulty: "intermediate", definition: "A tool used for writing or drawing.", exampleSentence: "Use your pencil to draw a circle.", theme: "School", imageUrl: "https://picsum.photos/seed/pencil/600/400", phonemes: "/ˈpensəl/" },
+  { id: "4", word: "SPACE", difficulty: "intermediate", definition: "The area beyond the Earth's atmosphere.", exampleSentence: "Astronauts travel into space.", theme: "Science", imageUrl: "https://picsum.photos/seed/space/600/400", phonemes: "/speɪs/" },
+  { id: "5", word: "BOOK", difficulty: "beginner", definition: "A set of printed pages held together.", exampleSentence: "I love reading a story book before bed.", theme: "School", imageUrl: "https://picsum.photos/seed/book/600/400", phonemes: "/bʊk/" },
+  { id: "6", word: "FRIEND", difficulty: "intermediate", definition: "A person you know well and like.", exampleSentence: "She is my best friend at school.", theme: "General", imageUrl: "https://picsum.photos/seed/friend/600/400", phonemes: "/frend/" },
+  { id: "7", word: "ELEPHANT", difficulty: "advanced", definition: "A very large gray animal with a long trunk.", exampleSentence: "The elephant sprayed water with its trunk.", theme: "Animals", imageUrl: "https://picsum.photos/seed/elephant/600/400", phonemes: "/ˈelɪfənt/" },
+  { id: "8", word: "MOUNTAIN", difficulty: "advanced", definition: "A very high hill often with snow on top.", exampleSentence: "We climbed to the top of the mountain.", theme: "Nature", imageUrl: "https://picsum.photos/seed/mountain/600/400", phonemes: "/ˈmaʊntɪn/" },
 ];
 
 export function useGameStore() {

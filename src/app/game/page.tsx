@@ -1,8 +1,9 @@
+
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { ArrowLeft, Star, RefreshCcw, Info, Loader2, Cloud, Zap, Clock } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { ArrowLeft, Star, RefreshCcw, Info, Loader2, Cloud, Zap, Clock, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGameStore, type WordItem, type Difficulty } from "@/lib/game-store";
 import { Progress } from "@/components/ui/progress";
@@ -24,6 +25,7 @@ export default function GamePage() {
   const [isWrong, setIsWrong] = useState(false);
   const [timer, setTimer] = useState(10);
   const [hiddenIndices, setHiddenIndices] = useState<number[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (!isLoaded || playableWords.length === 0 || wordsToPlay.length > 0) return;
@@ -46,6 +48,19 @@ export default function GamePage() {
     }
     return () => clearInterval(interval);
   }, [gameState, timer]);
+
+  const playAudio = useCallback(() => {
+    if (currentWord?.audioUrl) {
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play();
+      } else {
+        const audio = new Audio(currentWord.audioUrl);
+        audioRef.current = audio;
+        audio.play();
+      }
+    }
+  }, [currentWord]);
 
   const handleStartMemorizing = () => {
     setTimer(10);
@@ -186,12 +201,24 @@ export default function GamePage() {
                 />
               </div>
               <div className="w-full md:w-1/2 space-y-3 md:space-y-6 text-center md:text-left min-w-0 px-2">
-                <div className="bg-primary/10 inline-block px-3 md:px-6 py-1 md:py-2 rounded-full text-primary font-black uppercase tracking-widest text-[10px] md:text-sm">
-                  Ready to Learn?
+                <div className="flex items-center gap-2 justify-center md:justify-start">
+                  <div className="bg-primary/10 inline-block px-3 md:px-6 py-1 md:py-2 rounded-full text-primary font-black uppercase tracking-widest text-[10px] md:text-sm">
+                    Ready to Learn?
+                  </div>
+                  {currentWord.audioUrl && (
+                    <Button variant="ghost" size="icon" onClick={playAudio} className="rounded-full bg-accent/10 text-accent hover:bg-accent/20">
+                      <Volume2 className="h-4 w-4 md:h-6 md:w-6" />
+                    </Button>
+                  )}
                 </div>
                 <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-primary uppercase sparkle-text leading-tight break-all">
                   {currentWord.word}
                 </h2>
+                {currentWord.phonemes && (
+                   <p className="text-xl md:text-3xl font-black text-accent/80 tracking-widest -mt-2 md:-mt-4">
+                     {currentWord.phonemes}
+                   </p>
+                )}
                 <div className="space-y-2 md:space-y-4">
                   <div className="flex items-start gap-2 md:gap-3 justify-center md:justify-start">
                     <Info className="text-accent shrink-0 h-4 w-4 md:h-6 md:w-6 mt-1" />
@@ -213,10 +240,15 @@ export default function GamePage() {
         {gameState === "memorizing" && currentWord && (
           <div className="text-center space-y-6 md:space-y-12 animate-in fade-in zoom-in duration-500 w-full">
             <div className="relative inline-block max-w-full">
-              <div className="bg-white p-6 md:p-20 rounded-[2rem] md:rounded-[5rem] shadow-3xl border-4 md:border-12 border-primary/20 overflow-hidden flex items-center justify-center min-h-[150px] md:min-h-[400px]">
+              <div className="bg-white p-6 md:p-20 rounded-[2rem] md:rounded-[5rem] shadow-3xl border-4 md:border-12 border-primary/20 overflow-hidden flex flex-col items-center justify-center min-h-[150px] md:min-h-[400px]">
                  <p className="text-[min(15vw,8rem)] font-black text-primary tracking-tighter uppercase sparkle-text break-all leading-none">
                    {currentWord.word}
                  </p>
+                 {currentWord.phonemes && (
+                    <p className="text-2xl md:text-5xl font-black text-accent/60 tracking-widest mt-4">
+                      {currentWord.phonemes}
+                    </p>
+                 )}
               </div>
               <div className="absolute -top-4 -right-4 md:-top-12 md:-right-12 bg-accent h-12 w-12 md:h-32 md:w-32 rounded-full shadow-2xl border-2 md:border-8 border-white flex flex-col items-center justify-center animate-bounce-subtle">
                   <Clock className="h-3 w-3 md:h-8 md:w-8 text-white mb-0.5 md:mb-1" />
@@ -234,10 +266,18 @@ export default function GamePage() {
           <div className="w-full max-w-4xl space-y-6 md:space-y-12 text-center">
             <div className="bg-white/70 backdrop-blur-2xl p-4 md:p-16 rounded-[2rem] md:rounded-[4rem] border-2 md:border-8 border-white shadow-3xl space-y-4 md:space-y-12 relative overflow-hidden">
               <div className="flex flex-col items-center gap-3 md:gap-6">
-                <div className="h-16 w-16 md:h-32 md:w-32 relative rounded-xl md:rounded-3xl overflow-hidden border-2 md:border-4 border-white shadow-xl mb-1 bg-muted">
-                   <img src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word.toLowerCase()}/200/200`} alt="hint" className="object-cover h-full w-full" />
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-16 md:h-32 md:w-32 relative rounded-xl md:rounded-3xl overflow-hidden border-2 md:border-4 border-white shadow-xl bg-muted">
+                    <img src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word.toLowerCase()}/200/200`} alt="hint" className="object-cover h-full w-full" />
+                  </div>
+                  {currentWord.audioUrl && (
+                    <Button size="lg" variant="secondary" onClick={playAudio} className="rounded-full h-12 w-12 md:h-20 md:w-20 bg-accent text-white shadow-lg border-2 md:border-4 border-white">
+                      <Volume2 className="h-6 w-6 md:h-10 md:w-10" />
+                    </Button>
+                  )}
                 </div>
                 <p className="text-sm md:text-3xl font-bold italic text-muted-foreground break-words max-w-md">"{currentWord.definition}"</p>
+                {currentWord.phonemes && <p className="text-lg md:text-2xl font-black text-accent/60">{currentWord.phonemes}</p>}
               </div>
 
               <div className="flex flex-wrap justify-center gap-1.5 md:gap-4 overflow-y-auto max-h-[35vh] p-1">

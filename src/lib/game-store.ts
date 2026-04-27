@@ -165,7 +165,6 @@ export function useGameStore() {
     deleteDoc(wordRef);
   }, [db]);
 
-  // Optimistic loading: block UI only on Auth status, not full data sync
   const isLoaded = !userLoading;
 
   return {

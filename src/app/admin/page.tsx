@@ -26,12 +26,14 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useUser } from "@/firebase";
+import { useUser, useAuth } from "@/firebase";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 export default function AdminDashboard() {
   const router = useRouter();
   const { toast } = useToast();
   const { user } = useUser();
+  const auth = useAuth();
   const { allWords, customWords, addCustomWord, deleteCustomWord, isLoaded, activeClass, toggleWordAssignment } = useGameStore();
   
   const [searchTerm, setSearchTerm] = useState("");
@@ -63,6 +65,16 @@ export default function AdminDashboard() {
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
   }, []);
+
+  const handleSignIn = async () => {
+    if (!auth) return;
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Sign in failed:", error);
+    }
+  };
 
   if (!isLoaded) {
     return (
@@ -125,7 +137,7 @@ export default function AdminDashboard() {
     e.stopPropagation();
     toggleWordAssignment(id);
     setRevealedWordId(null);
-    toast({ title: "Word Status Updated" });
+    toast({ title: "Assignment Updated" });
   };
 
   const handleTouchStart = (id: string) => {
@@ -341,7 +353,7 @@ export default function AdminDashboard() {
                         <div className="text-center space-y-4 p-6 bg-white/10 rounded-3xl border border-white/20">
                           <Lock className="h-10 w-10 text-white/50 mx-auto" />
                           <p className="text-white font-black">Login Required</p>
-                          <Button className="w-full h-12 rounded-xl bg-primary text-white font-bold" onClick={() => router.push("/")}>Sign In Now</Button>
+                          <Button className="w-full h-12 rounded-xl bg-primary text-white font-bold" onClick={handleSignIn}>Sign In Now</Button>
                         </div>
                       )}
                     </div>

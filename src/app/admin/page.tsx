@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, ArrowLeft, Search, GraduationCap, Loader2, Volume2, Sparkles, CheckCircle, Circle, MoreVertical, X, Lock } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Search, GraduationCap, Loader2, Volume2, Sparkles, CheckCircle, Circle, MoreVertical, X, Lock, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -71,8 +71,17 @@ export default function AdminDashboard() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Sign in failed:", error);
+      toast({ title: "Welcome!", description: "You can now manage words." });
+    } catch (error: any) {
+      if (error.code === 'auth/unauthorized-domain') {
+        toast({
+          variant: "destructive",
+          title: "Domain Not Authorized",
+          description: "Please add this domain to Authorized Domains in Firebase Console.",
+        });
+      } else {
+        console.error("Sign in failed:", error);
+      }
     }
   };
 
@@ -136,7 +145,8 @@ export default function AdminDashboard() {
   const handleAssign = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     toggleWordAssignment(id);
-    setRevealedWordId(null);
+    // Keep it open for quick toggling if user wants, or close it
+    // setRevealedWordId(null); 
     toast({ title: "Assignment Updated" });
   };
 
@@ -179,94 +189,99 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="rounded-xl bg-primary hover:bg-primary/90 font-bold px-8 h-14 shadow-lg">
-              <Plus className="mr-2 h-5 w-5" /> Add New Word
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="rounded-[3rem] p-10 max-w-2xl overflow-y-auto max-h-[90vh]">
-            <DialogHeader>
-              <DialogTitle className="text-3xl font-black">New Word</DialogTitle>
-              <DialogDescription>Create a custom challenge with AI-generated visuals and sound.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-6 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="font-bold">Spelling Word</Label>
-                  <input
-                    placeholder="E.g., COMPUTER"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                    value={newWord.word}
-                    onChange={e => setNewWord({...newWord, word: e.target.value.toUpperCase()})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-bold">Difficulty</Label>
-                  <Select value={newWord.difficulty} onValueChange={(v: Difficulty) => setNewWord({...newWord, difficulty: v})}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="beginner">Beginner</SelectItem>
-                      <SelectItem value="intermediate">Explorer</SelectItem>
-                      <SelectItem value="advanced">Wizard</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Label className="font-bold">Image URL</Label>
-                    <Button variant="ghost" size="sm" onClick={handleAIGenerateImage} disabled={isGeneratingImage || !newWord.word} className="text-accent font-black h-8">
-                      {isGeneratingImage ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />} AI Art
-                    </Button>
-                  </div>
-                  <input
-                    placeholder="https://..."
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                    value={newWord.imageUrl}
-                    onChange={e => setNewWord({...newWord, imageUrl: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                   <div className="flex justify-between items-center">
-                    <Label className="font-bold">Sound & IPA</Label>
-                    <Button variant="ghost" size="sm" onClick={handleAIGeneratePronunciation} disabled={isGeneratingPronunciation || !newWord.word} className="text-secondary font-black h-8">
-                      {isGeneratingPronunciation ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : <Volume2 className="h-4 w-4 mr-1" />} AI Speak
-                    </Button>
-                  </div>
-                  <input
-                    placeholder="/ipa-phonetics/"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                    value={newWord.phonemes}
-                    onChange={e => setNewWord({...newWord, phonemes: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="font-bold">Definition</Label>
-                <Textarea placeholder="Explain to a child..." value={newWord.definition} onChange={e => setNewWord({...newWord, definition: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <Label className="font-bold">Example Sentence</Label>
-                <Textarea placeholder="The computer is..." value={newWord.exampleSentence} onChange={e => setNewWord({...newWord, exampleSentence: e.target.value})} />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={handleAddWord} className="w-full btn-bouncy bg-primary text-white h-16 rounded-2xl text-xl font-black shadow-xl">
-                SAVE TO BANK!
+        <div className="flex gap-4">
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="rounded-xl bg-primary hover:bg-primary/90 font-bold px-8 h-14 shadow-lg">
+                <Plus className="mr-2 h-5 w-5" /> Add New Word
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="rounded-[3rem] p-10 max-w-2xl overflow-y-auto max-h-[90vh]">
+              <DialogHeader>
+                <DialogTitle className="text-3xl font-black">New Word</DialogTitle>
+                <DialogDescription>Create a custom challenge with AI-generated visuals and sound.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-6 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="font-bold">Spelling Word</Label>
+                    <input
+                      placeholder="E.g., COMPUTER"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                      value={newWord.word}
+                      onChange={e => setNewWord({...newWord, word: e.target.value.toUpperCase()})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-bold">Difficulty</Label>
+                    <Select value={newWord.difficulty} onValueChange={(v: Difficulty) => setNewWord({...newWord, difficulty: v})}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="beginner">Beginner</SelectItem>
+                        <SelectItem value="intermediate">Explorer</SelectItem>
+                        <SelectItem value="advanced">Wizard</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Label className="font-bold">Image URL</Label>
+                      <Button variant="ghost" size="sm" onClick={handleAIGenerateImage} disabled={isGeneratingImage || !newWord.word} className="text-accent font-black h-8">
+                        {isGeneratingImage ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />} AI Art
+                      </Button>
+                    </div>
+                    <input
+                      placeholder="https://..."
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                      value={newWord.imageUrl}
+                      onChange={e => setNewWord({...newWord, imageUrl: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Label className="font-bold">Sound & IPA</Label>
+                      <Button variant="ghost" size="sm" onClick={handleAIGeneratePronunciation} disabled={isGeneratingPronunciation || !newWord.word} className="text-secondary font-black h-8">
+                        {isGeneratingPronunciation ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : <Volume2 className="h-4 w-4 mr-1" />} AI Speak
+                      </Button>
+                    </div>
+                    <input
+                      placeholder="/ipa-phonetics/"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                      value={newWord.phonemes}
+                      onChange={e => setNewWord({...newWord, phonemes: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="font-bold">Definition</Label>
+                  <Textarea placeholder="Explain to a child..." value={newWord.definition} onChange={e => setNewWord({...newWord, definition: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-bold">Example Sentence</Label>
+                  <Textarea placeholder="The computer is..." value={newWord.exampleSentence} onChange={e => setNewWord({...newWord, exampleSentence: e.target.value})} />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleAddWord} className="w-full btn-bouncy bg-primary text-white h-16 rounded-2xl text-xl font-black shadow-xl">
+                  SAVE TO BANK!
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </header>
 
       <main className="space-y-8">
-        <div className="bg-white/50 p-4 rounded-3xl border-2 border-dashed text-center">
-          <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-            💡 Tap "...", double-click, or hold a card to Manage Assignment & Deletion
+        <div className="bg-white/50 p-6 rounded-3xl border-2 border-dashed text-center space-y-2">
+          <p className="text-sm font-black text-primary uppercase tracking-widest flex items-center justify-center gap-2">
+            <Settings2 className="h-4 w-4" /> Management Console
+          </p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Tap the "..." menu, double-click, or hold a card to Assign words to your class or Delete custom words.
           </p>
         </div>
 
@@ -300,7 +315,10 @@ export default function AdminDashboard() {
               >
                 {/* Actions Overlay */}
                 {isRevealed && (
-                  <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 space-y-6 animate-in fade-in zoom-in duration-200">
+                  <div 
+                    className="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 space-y-6 animate-in fade-in zoom-in duration-200"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Button 
                       variant="ghost" 
                       size="icon" 

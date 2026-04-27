@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -109,7 +108,7 @@ export function useGameStore() {
           path: statsRef.path,
           operation: 'update',
           requestResourceData: updates
-        }));
+        } satisfies SecurityRuleContext));
       });
 
     if (user?.uid && firebaseStats?.activeClassId && db) {
@@ -132,7 +131,15 @@ export function useGameStore() {
       ? current.filter(id => id !== wordId)
       : [...current, wordId];
     
-    setDoc(doc(db, 'classrooms', activeClass.id), { assignedWordIds: next }, { merge: true });
+    const docRef = doc(db, 'classrooms', activeClass.id);
+    setDoc(docRef, { assignedWordIds: next }, { merge: true })
+      .catch((err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'update',
+          requestResourceData: { assignedWordIds: next }
+        } satisfies SecurityRuleContext));
+      });
   }, [db, activeClass]);
 
   const addStars = useCallback((amount: number) => updateStats({ stars: increment(amount) }), [updateStats]);

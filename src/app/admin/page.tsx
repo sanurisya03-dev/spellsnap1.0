@@ -1,9 +1,8 @@
-
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, ArrowLeft, Search, GraduationCap, Loader2, Volume2, Sparkles, CheckCircle, Circle } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Search, GraduationCap, Loader2, Volume2, Sparkles, CheckCircle, Circle, MoreVertical, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -46,6 +45,10 @@ export default function AdminDashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isGeneratingPronunciation, setIsGeneratingPronunciation] = useState(false);
+  
+  // State for revealed actions overlay
+  const [revealedWordId, setRevealedWordId] = useState<string | null>(null);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
 
   if (!isLoaded) {
     return (
@@ -98,8 +101,26 @@ export default function AdminDashboard() {
   const handleDelete = (id: string, word: string) => {
     if (confirm(`Are you sure you want to delete "${word}" from the bank?`)) {
       deleteCustomWord(id);
+      setRevealedWordId(null);
       toast({ title: "Word Deleted", variant: "destructive" });
     }
+  };
+
+  // Gesture Handlers
+  const handleTouchStart = (id: string) => {
+    longPressTimer.current = setTimeout(() => {
+      setRevealedWordId(id);
+    }, 600); // 600ms hold for long press
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+  };
+
+  const handleDoubleClick = (id: string) => {
+    setRevealedWordId(id);
   };
 
   return (
@@ -187,6 +208,12 @@ export default function AdminDashboard() {
       </header>
 
       <main className="space-y-8">
+        <div className="bg-white/50 p-4 rounded-3xl border-2 border-dashed text-center">
+          <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+            💡 Double-click or hold a card to Assign or Delete
+          </p>
+        </div>
+
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input 
@@ -201,12 +228,66 @@ export default function AdminDashboard() {
           {filteredWords.map((word) => {
             const isCustom = customWords.some(w => w.id === word.id);
             const isAssigned = activeClass?.assignedWordIds?.includes(word.id);
+            const isRevealed = revealedWordId === word.id;
             
             return (
-              <Card key={word.id} className={cn(
-                "rounded-[3rem] border-8 shadow-2xl overflow-hidden flex flex-col group transition-all hover:-translate-y-2",
-                isAssigned ? "border-primary/40 bg-primary/5" : "border-white bg-background"
-              )}>
+              <Card 
+                key={word.id} 
+                onDoubleClick={() => handleDoubleClick(word.id)}
+                onTouchStart={() => handleTouchStart(word.id)}
+                onTouchEnd={handleTouchEnd}
+                className={cn(
+                  "rounded-[3rem] border-8 shadow-2xl overflow-hidden flex flex-col group transition-all relative select-none cursor-pointer",
+                  isAssigned ? "border-primary/40 bg-primary/5" : "border-white bg-background",
+                  isRevealed ? "scale-105 shadow-primary/20" : "hover:-translate-y-2"
+                )}
+              >
+                {/* Actions Overlay */}
+                {isRevealed && (
+                  <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6 space-y-4 animate-in fade-in duration-200">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setRevealedWordId(null)}
+                      className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full"
+                    >
+                      <X className="h-8 w-8" />
+                    </Button>
+                    
+                    <h3 className="text-2xl font-black text-white uppercase">{word.word}</h3>
+                    
+                    <div className="w-full flex flex-col gap-3">
+                      {activeClass ? (
+                        <Button 
+                          onClick={() => {
+                            toggleWordAssignment(word.id);
+                            setRevealedWordId(null);
+                          }}
+                          className={cn(
+                            "w-full h-14 rounded-2xl font-black text-lg",
+                            isAssigned ? "bg-white text-primary" : "bg-primary text-white"
+                          )}
+                        >
+                          {isAssigned ? <X className="mr-2" /> : <CheckCircle className="mr-2" />}
+                          {isAssigned ? "REMOVE FROM CLASS" : "ASSIGN TO CLASS"}
+                        </Button>
+                      ) : (
+                        <p className="text-white/60 text-xs font-bold text-center">Join a class to assign words</p>
+                      )}
+                      
+                      {isCustom && (
+                        <Button 
+                          variant="destructive" 
+                          onClick={() => handleDelete(word.id, word.word)}
+                          className="w-full h-14 rounded-2xl font-black text-lg"
+                        >
+                          <Trash2 className="mr-2" /> DELETE WORD
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="aspect-video relative bg-muted">
                   <Image 
                     src={word.imageUrl || `https://picsum.photos/seed/${word.id}/600/400`} 
@@ -219,23 +300,12 @@ export default function AdminDashboard() {
                     {isCustom && <Badge className="bg-accent text-white font-black uppercase text-[10px]">Custom</Badge>}
                     {isAssigned && <Badge className="bg-primary text-white font-black uppercase text-[10px]">Assigned</Badge>}
                   </div>
-                  
-                  {activeClass && (
-                    <div className="absolute top-4 right-4">
-                       <Button 
-                        size="icon" 
-                        variant={isAssigned ? "default" : "secondary"}
-                        onClick={() => toggleWordAssignment(word.id)}
-                        className={cn(
-                          "rounded-full h-10 w-10 shadow-lg border-2 border-white",
-                          isAssigned ? "bg-primary text-white" : "bg-white/90 text-muted-foreground"
-                        )}
-                        title={isAssigned ? "Remove from Class" : "Assign to Class"}
-                      >
-                        {isAssigned ? <CheckCircle className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-                      </Button>
+
+                  <div className="absolute top-4 right-4">
+                    <div className="bg-white/80 p-2 rounded-full shadow-lg">
+                      <MoreVertical className="h-5 w-5 text-muted-foreground" />
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 <CardHeader className="p-6 pb-2">
@@ -243,16 +313,6 @@ export default function AdminDashboard() {
                     <CardTitle className="text-3xl font-black text-primary uppercase">{word.word}</CardTitle>
                     <div className="flex gap-2">
                       {word.audioUrl && <Volume2 className="h-5 w-5 text-accent" />}
-                      {isCustom && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleDelete(word.id, word.word)}
-                          className="text-destructive hover:bg-destructive/10 h-8 w-8"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </Button>
-                      )}
                     </div>
                   </div>
                   {word.phonemes && <p className="text-xs font-black text-accent/70 tracking-widest">{word.phonemes}</p>}

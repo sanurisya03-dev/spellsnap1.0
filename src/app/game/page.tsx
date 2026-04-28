@@ -2,8 +2,8 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { ArrowLeft, Star, RefreshCcw, Info, Loader2, Cloud, Clock, Volume2, Keyboard, Sparkles } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "react";
+import { ArrowLeft, Star, RefreshCcw, Info, Loader2, Cloud, Clock, Volume2, Keyboard, Sparkles, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGameStore, type WordItem, type Difficulty } from "@/lib/game-store";
 import { Progress } from "@/components/ui/progress";
@@ -14,7 +14,7 @@ import { useUser } from "@/firebase";
 
 type GameState = "intro" | "memorizing" | "playing" | "success" | "finished" | "empty";
 
-export default function GamePage() {
+function GameContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const difficulty = (searchParams.get("difficulty") || "beginner") as Difficulty;
@@ -28,7 +28,6 @@ export default function GamePage() {
   const [isWrong, setIsWrong] = useState(false);
   const [timer, setTimer] = useState(10);
   const [hiddenIndices, setHiddenIndices] = useState<number[]>([]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -156,6 +155,7 @@ export default function GamePage() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Backspace") handleBackspace();
+      else if (e.key === "Tab") { /* ignore */ }
       else handleCharInput(e.key);
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -200,7 +200,18 @@ export default function GamePage() {
   return (
     <div className="min-h-screen bg-background relative flex flex-col p-4 md:p-8" onClick={focusInput}>
       <div className="bg-animate" />
-      <input ref={hiddenInputRef} type="text" className="absolute opacity-0 pointer-events-none" value="" onChange={(e) => handleCharInput(e.target.value.slice(-1))} />
+      <input 
+        ref={hiddenInputRef} 
+        type="text" 
+        className="absolute opacity-0 pointer-events-none" 
+        value="" 
+        autoFocus
+        onChange={(e) => {
+          const val = e.target.value.slice(-1);
+          if (val) handleCharInput(val);
+          e.target.value = "";
+        }} 
+      />
 
       <header className="max-w-5xl w-full mx-auto flex justify-between items-center mb-6 z-20 gap-4">
         <Button variant="ghost" onClick={() => router.push("/")} className="btn-bouncy bg-white/90 px-4 h-10 shadow-xl border-4 border-white text-xs md:text-lg">
@@ -224,7 +235,9 @@ export default function GamePage() {
               <div className="flex-1 space-y-4 text-center md:text-left">
                 <h2 className="text-6xl md:text-8xl font-black text-primary uppercase sparkle-text">{currentWord.word}</h2>
                 <p className="text-lg md:text-2xl font-bold italic text-muted-foreground">"{currentWord.definition}"</p>
-                <Button size="lg" onClick={playAudio} className="rounded-full bg-accent text-white h-14 w-14 shadow-lg"><Volume2 className="h-8 w-8" /></Button>
+                <div className="flex justify-center md:justify-start gap-4">
+                  <Button size="lg" onClick={playAudio} className="rounded-full bg-accent text-white h-14 w-14 shadow-lg"><Volume2 className="h-8 w-8" /></Button>
+                </div>
               </div>
             </div>
             <Button onClick={handleStartMemorizing} className="btn-bouncy px-12 py-6 text-2xl h-auto bg-primary text-white shadow-2xl">I'M READY!</Button>
@@ -239,6 +252,7 @@ export default function GamePage() {
               </div>
               <div className="absolute -top-6 -right-6 bg-accent h-20 w-20 rounded-full border-4 border-white flex items-center justify-center text-white text-3xl font-black">{timer}</div>
             </div>
+            <p className="text-xl font-bold text-muted-foreground">Look carefully! It's going to disappear!</p>
           </div>
         )}
 
@@ -246,15 +260,19 @@ export default function GamePage() {
           <div className="w-full max-w-4xl space-y-12 text-center">
             <div className="bg-white/70 p-6 md:p-16 rounded-[3rem] border-8 border-white shadow-3xl space-y-12">
                <div className="flex justify-center gap-4">
-                 <div className="h-20 w-20 relative rounded-2xl overflow-hidden border-4 border-white shadow-xl">
-                   <img src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word}/200/200`} alt="hint" className="object-cover" />
+                 <div className="h-20 w-20 relative rounded-2xl overflow-hidden border-4 border-white shadow-xl bg-muted">
+                   <Image src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word}/200/200`} alt="hint" fill className="object-cover" />
                  </div>
-                 <Button onClick={playAudio} className="h-20 w-20 rounded-full bg-accent text-white"><Volume2 className="h-10 w-10" /></Button>
+                 <Button onClick={playAudio} className="h-20 w-20 rounded-full bg-accent text-white shadow-xl"><Volume2 className="h-10 w-10" /></Button>
                </div>
                <div className="flex flex-wrap justify-center gap-3">
                 {userInput.map((char, i) => (
                   <div key={i} className={cn("scrabble-tile text-2xl md:text-5xl w-12 h-12 md:w-20 md:h-20", char === "" && "empty", isWrong && hiddenIndices.includes(i) && "error", !hiddenIndices.includes(i) && "opacity-50")}>{char}</div>
                 ))}
+              </div>
+              <div className="flex justify-center gap-4 pt-4">
+                <Button variant="outline" onClick={focusInput} className="rounded-full font-black border-2"><Keyboard className="mr-2" /> Keyboard</Button>
+                <Button variant="outline" onClick={handleBackspace} className="rounded-full font-black border-2">Delete</Button>
               </div>
             </div>
           </div>
@@ -277,5 +295,13 @@ export default function GamePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function GamePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
+      <GameContent />
+    </Suspense>
   );
 }

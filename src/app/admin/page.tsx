@@ -238,7 +238,7 @@ export default function AdminDashboard() {
         {filteredWords.map(word => (
           <Card key={word.id} className="rounded-[3rem] border-8 border-white shadow-2xl overflow-hidden group hover:-translate-y-2 transition-all cursor-pointer" onClick={() => playAudio(word.audioUrl, word.word)}>
             <div className="aspect-video relative bg-muted">
-              <Image src={word.imageUrl || `https://picsum.photos/seed/${word.id}/600/400`} alt={word.word} fill className="object-cover" />
+              {word.imageUrl && <Image src={word.imageUrl} alt={word.word} fill className="object-cover" />}
               <Badge className="absolute top-4 left-4 bg-white/90 text-primary font-black uppercase text-xs">{word.difficulty}</Badge>
               {user && (
                 <Button variant="destructive" size="icon" onClick={(e) => handleDelete(e, word.id, word.word)} className="absolute top-4 right-4 h-10 w-10 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">

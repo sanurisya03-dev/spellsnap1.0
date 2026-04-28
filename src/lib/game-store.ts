@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -58,7 +57,7 @@ export function useGameStore() {
   }, [firebaseStats]);
 
   const allWords = useMemo(() => {
-    return firebaseWords || [];
+    return firebaseWords || DEFAULT_WORDS;
   }, [firebaseWords]);
 
   const updateStats = useCallback(async (updates: Partial<UserStats>) => {

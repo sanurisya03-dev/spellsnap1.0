@@ -1,8 +1,7 @@
-
 "use client";
 
 import Link from "next/link";
-import { Sparkles, Play, Award, Settings, Star, LogIn, LogOut, User, Loader2, Rocket, Camera, Lightbulb, Cloud, Sun, Users, BookOpen, GraduationCap, Search, Eye } from "lucide-react";
+import { Sparkles, Play, Award, Rocket, LogIn, LogOut, User, Loader2, BookOpen, GraduationCap, Cloud, Sun, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGameStore } from "@/lib/game-store";
@@ -12,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LobbyPage() {
-  const { stats, isLoaded, loadingData } = useGameStore();
+  const { isLoaded, loadingData } = useGameStore();
   const { user, loading: userLoading } = useUser();
   const auth = useAuth();
   const { toast } = useToast();
@@ -25,7 +24,15 @@ export default function LobbyPage() {
       toast({ title: "Welcome back!", description: "Ready to snap some words?" });
     } catch (error: any) {
       console.error("Sign in failed:", error);
-      toast({ variant: "destructive", title: "Login Failed", description: "Could not sign in." });
+      if (error.code === 'auth/unauthorized-domain') {
+        toast({
+          variant: "destructive",
+          title: "Setup Required",
+          description: "Please add this domain to Authorized Domains in the Firebase Console.",
+        });
+      } else {
+        toast({ variant: "destructive", title: "Login Failed", description: "Could not sign in." });
+      }
     }
   };
 
@@ -39,7 +46,7 @@ export default function LobbyPage() {
     }
   };
 
-  if (!isLoaded) {
+  if (!isLoaded || userLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -50,11 +57,10 @@ export default function LobbyPage() {
   return (
     <div className="min-h-screen relative flex flex-col items-center">
       <div className="bg-animate">
-        <Cloud className="floating-element text-accent/30" size={120} style={{ top: '10%', left: '5%', animationDelay: '0s' }} />
-        <Star className="floating-element text-primary/40" size={40} style={{ top: '20%', right: '10%', animationDelay: '2s' }} />
-        <Cloud className="floating-element text-accent/30" size={80} style={{ bottom: '15%', left: '15%', animationDelay: '4s' }} />
-        <Sun className="floating-element text-primary/30" size={200} style={{ top: '-40px', right: '-40px', animationDelay: '1s' }} />
-        <Sparkles className="floating-element text-secondary/40" size={50} style={{ bottom: '30%', right: '5%', animationDelay: '3s' }} />
+        <Cloud className="floating-element text-primary/10" size={120} style={{ top: '10%', left: '5%', animationDelay: '0s' }} />
+        <Cloud className="floating-element text-primary/10" size={80} style={{ bottom: '15%', left: '15%', animationDelay: '4s' }} />
+        <Sun className="floating-element text-primary/20" size={200} style={{ top: '-40px', right: '-40px', animationDelay: '1s' }} />
+        <Sparkles className="floating-element text-primary/30" size={50} style={{ bottom: '30%', right: '5%', animationDelay: '3s' }} />
       </div>
 
       <header className="w-full max-w-6xl p-4 md:p-8 flex justify-between items-center z-20">
@@ -75,9 +81,7 @@ export default function LobbyPage() {
           )}
           {user ? (
             <div className="flex items-center gap-2 md:gap-4 bg-white/90 backdrop-blur-xl p-1.5 md:p-3 pl-3 md:pl-6 rounded-full border-2 md:border-4 border-white shadow-xl">
-              <div className="flex flex-col text-right">
-                <span className="font-black hidden sm:block text-primary text-sm md:text-base leading-none">{user.displayName}</span>
-              </div>
+              <span className="font-black hidden sm:block text-primary text-sm md:text-base leading-none">{user.displayName}</span>
               <Avatar className="h-8 w-8 md:h-12 md:w-12 border-2 md:border-4 border-primary">
                 <AvatarImage src={user.photoURL || ""} />
                 <AvatarFallback><User className="h-4 w-4 md:h-6 md:w-6" /></AvatarFallback>
@@ -123,7 +127,7 @@ export default function LobbyPage() {
                   <Button onClick={handleSignIn} className="btn-bouncy bg-accent text-white h-16 px-12 text-xl w-full">SIGN IN TO PLAY</Button>
                 )}
                 <Link href="/admin" className="block">
-                  <Button variant="outline" className="btn-bouncy border-4 border-accent text-accent bg-white h-16 px-12 text-xl w-full shadow-none hover:bg-accent/5">Browse Word Explorer</Button>
+                  <Button variant="outline" className="btn-bouncy border-4 border-accent text-accent bg-white h-16 px-12 text-xl w-full shadow-none hover:bg-accent/5">Browse Word Bank</Button>
                 </Link>
               </div>
             </CardContent>
@@ -154,7 +158,7 @@ export default function LobbyPage() {
              <Link href="/game?difficulty=beginner" className="block">
                 <Button variant="outline" className="w-full h-24 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg p-2 group">
                    <Rocket className="h-6 w-6 text-primary group-hover:scale-125 transition-transform" />
-                   <span className="text-[10px] font-black uppercase text-primary">Practice</span>
+                   <span className="text-[10px] font-black uppercase text-primary">Beginner</span>
                 </Button>
              </Link>
              <Link href="/stats" className="block">
@@ -165,8 +169,8 @@ export default function LobbyPage() {
              </Link>
              <Link href="/admin" className="block">
                 <Button variant="outline" className="w-full h-24 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg p-2 group">
-                   <BookOpen className="h-6 w-6 text-orange-500 group-hover:scale-125 transition-transform" />
-                   <span className="text-[10px] font-black uppercase text-orange-600">Word Explorer</span>
+                   <BookOpen className="h-6 w-6 text-primary group-hover:scale-125 transition-transform" />
+                   <span className="text-[10px] font-black uppercase text-primary">Word Bank</span>
                 </Button>
              </Link>
              <Link href="/admin/generator" className="block">

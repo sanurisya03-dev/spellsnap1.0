@@ -4,15 +4,15 @@
 
 @layer base {
   :root {
-    --background: 34 100% 98%; /* Soft creamy peach */
+    --background: 34 100% 98%; /* #F9F3EC - Soft off-white */
     --foreground: 20 50% 15%;
     --card: 0 0% 100%;
     --card-foreground: 20 50% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 20 50% 15%;
-    --primary: 43 100% 50%; /* Vibrant Golden Yellow */
+    --primary: 38 93% 54%; /* #F7A71C - Vibrant orange-yellow */
     --primary-foreground: 0 0% 100%;
-    --secondary: 335 80% 60%; /* Playful Raspberry Pink */
+    --secondary: 19 68% 43%; /* #B85122 - Warm earthy red-orange */
     --secondary-foreground: 0 0% 100%;
     --muted: 34 20% 90%;
     --muted-foreground: 20 20% 45%;
@@ -22,7 +22,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 34 30% 88%;
     --input: 34 30% 88%;
-    --ring: 43 100% 50%;
+    --ring: 38 93% 54%;
     --radius: 2.5rem;
   }
 }
@@ -52,7 +52,7 @@
   height: 100%;
   z-index: -1;
   overflow: hidden;
-  background: radial-gradient(circle at top left, #FFF9F0 0%, #FFF0E0 100%);
+  background: radial-gradient(circle at top left, #FFF9F0 0%, #F9F3EC 100%);
 }
 
 .floating-element {
@@ -105,13 +105,4 @@
 
 @keyframes shine {
   to { background-position: 200% center; }
-}
-
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.animate-spin-slow {
-  animation: spin-slow 20s linear infinite;
 }

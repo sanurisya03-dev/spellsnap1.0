@@ -1,9 +1,9 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, LogIn, Plus, Trash2, ArrowLeft, Search, Loader2, Volume2, Sparkles, MoreVertical, X, Lock, Settings2, Eye } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useGameStore, type Difficulty } from "@/lib/game-store";
@@ -49,7 +49,6 @@ export default function AdminDashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isGeneratingPronunciation, setIsGeneratingPronunciation] = useState(false);
-  const [revealedWordId, setRevealedWordId] = useState<string | null>(null);
 
   const handleSignIn = async () => {
     if (!auth) return;
@@ -59,6 +58,13 @@ export default function AdminDashboard() {
       toast({ title: "Welcome!", description: "You can now manage the word bank." });
     } catch (error: any) {
       console.error("Sign in failed:", error);
+      if (error.code === 'auth/unauthorized-domain') {
+        toast({
+          variant: "destructive",
+          title: "Setup Required",
+          description: "Please add this domain to Authorized Domains in the Firebase Console.",
+        });
+      }
     }
   };
 
@@ -121,7 +127,6 @@ export default function AdminDashboard() {
     e.stopPropagation();
     if (confirm(`Delete "${word}"?`)) {
       deleteCustomWord(id);
-      setRevealedWordId(null);
       toast({ title: "Word Deleted", variant: "destructive" });
     }
   };
@@ -134,8 +139,8 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" onClick={() => router.push("/")} className="rounded-xl shrink-0 border-4 border-white shadow-lg"><ArrowLeft /></Button>
           <div>
-            <h1 className="text-3xl font-black flex items-center gap-2"><Eye className="text-accent" /> Word Explorer</h1>
-            <p className="text-sm text-muted-foreground font-medium">Browse and manage spelling challenges.</p>
+            <h1 className="text-3xl font-black flex items-center gap-2"><Eye className="text-primary" /> Word Explorer</h1>
+            <p className="text-sm text-muted-foreground font-medium">Browse the words students are learning.</p>
           </div>
         </div>
 
@@ -146,7 +151,7 @@ export default function AdminDashboard() {
              </Link>
              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="rounded-xl bg-primary hover:bg-primary/90 font-black px-8 h-14 shadow-xl border-4 border-white"><Plus className="mr-2" /> Add Word</Button>
+                <Button className="rounded-xl bg-primary hover:bg-primary/90 font-black px-8 h-14 shadow-xl border-4 border-white text-white"><Plus className="mr-2" /> Add Word</Button>
               </DialogTrigger>
               <DialogContent className="rounded-[3rem] p-8 max-w-2xl bg-white border-8 border-white shadow-3xl">
                 <DialogHeader><DialogTitle className="text-3xl font-black">NEW WORD</DialogTitle></DialogHeader>
@@ -165,11 +170,11 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="flex gap-4">
-                    <Button variant="outline" onClick={handleAIGenerateImage} disabled={isGeneratingImage} className="flex-1 h-12 rounded-xl font-bold border-2 border-accent/20">
-                      {isGeneratingImage ? <Loader2 className="animate-spin h-5 w-5" /> : <Sparkles className="h-5 w-5 mr-2 text-accent" />} Generate Image
+                    <Button variant="outline" onClick={handleAIGenerateImage} disabled={isGeneratingImage} className="flex-1 h-12 rounded-xl font-bold border-2 border-secondary/20">
+                      {isGeneratingImage ? <Loader2 className="animate-spin h-5 w-5" /> : <Sparkles className="h-5 w-5 mr-2 text-primary" />} Generate Image
                     </Button>
                     <Button variant="outline" onClick={handleAIGeneratePronunciation} disabled={isGeneratingPronunciation} className="flex-1 h-12 rounded-xl font-bold border-2 border-secondary/20">
-                      {isGeneratingPronunciation ? <Loader2 className="animate-spin h-5 w-5" /> : <Volume2 className="h-5 w-5 mr-2 text-secondary" />} Generate Sound
+                      {isGeneratingPronunciation ? <Loader2 className="animate-spin h-5 w-5" /> : <Volume2 className="h-5 w-5 mr-2 text-primary" />} Generate Sound
                     </Button>
                   </div>
                   <div className="space-y-2"><Label className="font-bold">Definition</Label><Textarea value={newWord.definition} onChange={e => setNewWord({...newWord, definition: e.target.value})} className="rounded-xl border-2" /></div>
@@ -179,7 +184,7 @@ export default function AdminDashboard() {
             </Dialog>
           </div>
         ) : (
-          <Button onClick={handleSignIn} className="rounded-xl bg-primary hover:bg-primary/90 font-black px-8 h-14 shadow-xl border-4 border-white"><LogIn className="mr-2" /> Teacher Login</Button>
+          <Button onClick={handleSignIn} className="rounded-xl bg-primary hover:bg-primary/90 font-black px-8 h-14 shadow-xl border-4 border-white text-white"><LogIn className="mr-2" /> Teacher Login</Button>
         )}
       </header>
 
@@ -203,15 +208,23 @@ export default function AdminDashboard() {
             <CardHeader className="p-6">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-4xl font-black text-primary uppercase">{word.word}</CardTitle>
-                <Volume2 className="h-6 w-6 text-accent" />
+                <Volume2 className="h-6 w-6 text-secondary" />
               </div>
-              {word.phonemes && <p className="text-xs font-black text-accent/70 tracking-widest uppercase">{word.phonemes}</p>}
+              {word.phonemes && <p className="text-xs font-black text-secondary/70 tracking-widest uppercase">{word.phonemes}</p>}
             </CardHeader>
             <CardContent className="p-6 pt-0">
               <p className="text-lg italic text-muted-foreground font-bold leading-tight">"{word.definition}"</p>
             </CardContent>
           </Card>
         ))}
+        {filteredWords.length === 0 && (
+          <div className="col-span-full py-20 text-center space-y-4">
+             <div className="bg-white p-10 rounded-full inline-block border-8 border-white shadow-xl">
+               <BookOpen className="h-20 w-20 text-muted-foreground opacity-20" />
+             </div>
+             <p className="text-2xl font-black text-muted-foreground">The bank is currently empty.</p>
+          </div>
+        )}
       </div>
     </div>
   );

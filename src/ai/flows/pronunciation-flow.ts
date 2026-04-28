@@ -20,10 +20,10 @@ const PronunciationOutputSchema = z.object({
 });
 
 export async function getPronunciation(input: { word: string }): Promise<{ phonemes: string; audioUrl: string }> {
-  // 1. Generate Phonemes (IPA) using direct generate call for reliability
+  // 1. Generate Phonemes (IPA) using British English standard
   const { output: phonemeOutput } = await ai.generate({
     model: 'googleai/gemini-2.5-flash',
-    prompt: `Provide the International Phonetic Alphabet (IPA) representation for the word: "${input.word}". Return ONLY the IPA symbols.`,
+    prompt: `Provide the International Phonetic Alphabet (IPA) representation for the word: "${input.word}". Use British English (Received Pronunciation) standard. Return ONLY the IPA symbols.`,
     output: {
       schema: z.object({ ipa: z.string() })
     },
@@ -40,14 +40,14 @@ export async function getPronunciation(input: { word: string }): Promise<{ phone
 
   const ipa = phonemeOutput?.ipa || '';
 
-  // 2. Generate Audio using TTS
+  // 2. Generate Audio using TTS with a British accent (Charon)
   const { media } = await ai.generate({
     model: googleAI.model('gemini-2.5-flash-preview-tts'),
     config: {
       responseModalities: ['AUDIO'],
       speechConfig: {
         voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: 'Algenib' },
+          prebuiltVoiceConfig: { voiceName: 'Charon' }, // Charon is a standard British English voice
         },
       },
       safetySettings: [
@@ -58,7 +58,7 @@ export async function getPronunciation(input: { word: string }): Promise<{ phone
         { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: 'BLOCK_NONE' },
       ]
     },
-    prompt: `Pronounce the word: ${input.word}`,
+    prompt: `Pronounce the word clearly with a British accent: ${input.word}`,
   });
 
   if (!media) {

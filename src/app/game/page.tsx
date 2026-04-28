@@ -3,7 +3,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { ArrowLeft, Star, RefreshCcw, Info, Loader2, Cloud, Clock, Volume2 } from "lucide-react";
+import { ArrowLeft, Star, RefreshCcw, Info, Loader2, Cloud, Clock, Volume2, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGameStore, type WordItem, type Difficulty } from "@/lib/game-store";
 import { Progress } from "@/components/ui/progress";
@@ -27,6 +27,7 @@ export default function GamePage() {
   const [timer, setTimer] = useState(10);
   const [hiddenIndices, setHiddenIndices] = useState<number[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const hiddenInputRef = useRef<HTMLInputElement>(null);
 
   // Sound Effect Helpers
   const playSfx = (type: 'success' | 'fail') => {
@@ -127,32 +128,20 @@ export default function GamePage() {
     
     setUserInput(initialInput);
     setGameState("playing");
+    
+    // Focus hidden input for mobile keyboard
+    setTimeout(() => hiddenInputRef.current?.focus(), 100);
   };
 
-  const handleKeyPress = useCallback((e: KeyboardEvent) => {
+  const handleCharInput = useCallback((char: string) => {
     if (gameState !== "playing") return;
-
-    const char = e.key.toUpperCase();
-    if (/^[A-Z]$/.test(char)) {
+    const upperChar = char.toUpperCase();
+    if (/^[A-Z]$/.test(upperChar)) {
       setUserInput(prev => {
         const nextEmptyHidden = prev.findIndex((c, i) => c === "" && hiddenIndices.includes(i));
         if (nextEmptyHidden !== -1) {
           const next = [...prev];
-          next[nextEmptyHidden] = char;
-          return next;
-        }
-        return prev;
-      });
-    } else if (e.key === "Backspace") {
-      setUserInput(prev => {
-        const lastFilledHiddenIdx = [...prev].reduce((acc, char, idx) => {
-          if (char !== "" && hiddenIndices.includes(idx)) return idx;
-          return acc;
-        }, -1);
-
-        if (lastFilledHiddenIdx !== -1) {
-          const next = [...prev];
-          next[lastFilledHiddenIdx] = "";
+          next[nextEmptyHidden] = upperChar;
           return next;
         }
         return prev;
@@ -160,10 +149,35 @@ export default function GamePage() {
     }
   }, [gameState, hiddenIndices]);
 
+  const handleBackspace = useCallback(() => {
+    if (gameState !== "playing") return;
+    setUserInput(prev => {
+      const lastFilledHiddenIdx = [...prev].reduce((acc, char, idx) => {
+        if (char !== "" && hiddenIndices.includes(idx)) return idx;
+        return acc;
+      }, -1);
+
+      if (lastFilledHiddenIdx !== -1) {
+        const next = [...prev];
+        next[lastFilledHiddenIdx] = "";
+        return next;
+      }
+      return prev;
+    });
+  }, [gameState, hiddenIndices]);
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Backspace") {
+      handleBackspace();
+    } else {
+      handleCharInput(e.key);
+    }
+  }, [handleCharInput, handleBackspace]);
+
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [handleKeyPress]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   useEffect(() => {
     if (gameState === "playing" && currentWord && !userInput.includes("")) {
@@ -198,6 +212,8 @@ export default function GamePage() {
     }
   };
 
+  const focusInput = () => hiddenInputRef.current?.focus();
+
   if (!isLoaded || (wordsToPlay.length === 0 && gameState !== "finished")) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -207,11 +223,34 @@ export default function GamePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative flex flex-col p-4 md:p-8 overflow-x-hidden">
+    <div className="min-h-screen bg-background relative flex flex-col p-4 md:p-8 overflow-x-hidden" onClick={focusInput}>
       <div className="bg-animate">
         <Cloud className="floating-element text-accent/20" size={150} style={{ top: '15%', left: '10%' }} />
         <Cloud className="floating-element text-accent/20" size={120} style={{ bottom: '20%', right: '15%' }} />
       </div>
+
+      {/* Hidden input for mobile keyboard trigger */}
+      <input 
+        ref={hiddenInputRef}
+        type="text" 
+        className="opacity-0 absolute -z-10 h-0 w-0"
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="none"
+        spellCheck="false"
+        onChange={(e) => {
+          const val = e.target.value;
+          if (val) {
+            handleCharInput(val.slice(-1));
+            e.target.value = ""; // Clear for next input
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Backspace") {
+            handleBackspace();
+          }
+        }}
+      />
 
       <header className="max-w-5xl w-full mx-auto flex justify-between items-center mb-6 md:mb-12 z-20 gap-4">
         <Button variant="ghost" onClick={() => router.push("/")} className="btn-bouncy bg-white/90 backdrop-blur-xl px-4 md:px-8 h-10 md:h-14 shadow-xl border-4 border-white text-xs md:text-lg">
@@ -316,29 +355,29 @@ export default function GamePage() {
         )}
 
         {gameState === "playing" && currentWord && (
-          <div className="w-full max-w-4xl space-y-6 md:space-y-12 text-center">
+          <div className="w-full max-w-4xl space-y-4 md:space-y-12 text-center">
             <div className="bg-white/70 backdrop-blur-2xl p-4 md:p-16 rounded-[2rem] md:rounded-[4rem] border-2 md:border-8 border-white shadow-3xl space-y-4 md:space-y-12 relative overflow-hidden">
-              <div className="flex flex-col items-center gap-3 md:gap-6">
+              <div className="flex flex-col items-center gap-2 md:gap-6">
                 <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 md:h-32 md:w-32 relative rounded-xl md:rounded-3xl overflow-hidden border-2 md:border-4 border-white shadow-xl bg-muted">
+                  <div className="h-12 w-12 md:h-32 md:w-32 relative rounded-xl md:rounded-3xl overflow-hidden border-2 md:border-4 border-white shadow-xl bg-muted">
                     <img src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word.toLowerCase()}/200/200`} alt="hint" className="object-cover h-full w-full" />
                   </div>
                   <Button 
                     size="lg" 
                     variant="secondary" 
                     onClick={playAudio} 
-                    className="rounded-full h-12 w-12 md:h-20 md:w-20 bg-accent text-white shadow-lg border-2 md:border-4 border-white hover:bg-accent/90 animate-pulse"
+                    className="rounded-full h-10 w-10 md:h-20 md:w-20 bg-accent text-white shadow-lg border-2 md:border-4 border-white hover:bg-accent/90 animate-pulse"
                   >
-                    <Volume2 className="h-6 w-6 md:h-10 md:w-10" />
+                    <Volume2 className="h-5 w-5 md:h-10 md:w-10" />
                   </Button>
                 </div>
-                <p className="text-sm md:text-3xl font-bold italic text-muted-foreground break-words max-w-md">"{currentWord.definition}"</p>
+                <p className="text-xs md:text-3xl font-bold italic text-muted-foreground break-words max-w-md">"{currentWord.definition}"</p>
               </div>
 
               <div className="flex flex-wrap justify-center gap-1.5 md:gap-4 overflow-y-auto max-h-[35vh] p-1">
                 {userInput.map((char, i) => (
                   <div key={i} className={cn(
-                    "scrabble-tile text-lg sm:text-2xl md:text-4xl w-8 h-8 sm:w-14 sm:h-14 md:w-20 md:h-20", 
+                    "scrabble-tile text-sm sm:text-2xl md:text-4xl w-7 h-7 sm:w-14 sm:h-14 md:w-20 md:h-20", 
                     char === "" && "empty", 
                     isWrong && hiddenIndices.includes(i) && "error",
                     !hiddenIndices.includes(i) && "bg-muted/10 text-muted-foreground border-muted/30 shadow-none opacity-60"
@@ -346,6 +385,12 @@ export default function GamePage() {
                     {char}
                   </div>
                 ))}
+              </div>
+
+              <div className="md:hidden pt-4">
+                 <Button variant="outline" size="sm" onClick={focusInput} className="rounded-full text-[10px] font-black uppercase tracking-widest h-8 border-2">
+                   <Keyboard className="mr-1 h-3 w-3" /> Tap to show keyboard
+                 </Button>
               </div>
             </div>
             <div className="bg-primary/20 px-6 md:px-12 py-2 md:py-4 rounded-full text-primary font-black uppercase tracking-widest text-[10px] md:text-lg inline-block border-2 md:border-4 border-primary/20 animate-pulse">

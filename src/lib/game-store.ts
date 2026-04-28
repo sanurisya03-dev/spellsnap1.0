@@ -150,10 +150,14 @@ export function useGameStore() {
   const joinClass = useCallback(async (code: string) => {
     if (!db || !user?.uid) return false;
     
-    const q = query(collection(db, 'classrooms'), where('code', '==', code.toUpperCase()), limit(1));
+    const cleanCode = code.trim().toUpperCase();
+    const q = query(collection(db, 'classrooms'), where('code', '==', cleanCode), limit(1));
     const snapshot = await getDocs(q);
     
-    if (snapshot.empty) return false;
+    if (snapshot.empty) {
+      console.warn("Classroom query returned no results for code:", cleanCode);
+      return false;
+    }
     
     const classDoc = snapshot.docs[0];
     

@@ -8,7 +8,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { googleAI } from '@genkit-ai/google-genai';
 import wav from 'wav';
 
 const PronunciationInputSchema = z.object({
@@ -25,7 +24,7 @@ const phonemePrompt = ai.definePrompt({
   name: 'generatePhonemes',
   input: { schema: z.object({ word: z.string() }) },
   output: { schema: z.object({ ipa: z.string() }) },
-  prompt: 'You are a phonetic expert. Provide the International Phonetic Alphabet (IPA) representation for the word: "{{word}}". Return only the IPA in the JSON output.',
+  prompt: 'Provide the International Phonetic Alphabet (IPA) representation for the word: "{{word}}".',
 });
 
 export async function getPronunciation(input: { word: string }): Promise<{ phonemes: string; audioUrl: string }> {
@@ -77,7 +76,7 @@ async function toWav(
       bitDepth: sampleWidth * 8,
     });
 
-    let bufs: Buffer[] = [];
+    let bufs = [] as any[];
     writer.on('error', reject);
     writer.on('data', function (d) {
       bufs.push(d);

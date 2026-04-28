@@ -22,6 +22,26 @@ export async function generateWordImage(input: { word: string; theme?: string })
   const { media } = await ai.generate({
     model: 'googleai/imagen-4.0-fast-generate-001',
     prompt: `A cute, colorful, and friendly educational illustration for children of the word: "${input.word}". ${input.theme ? `Theme: ${input.theme}.` : ''} High quality, simple 2D or 3D cartoon style, white background, suitable for a primary school spelling app.`,
+    config: {
+      safetySettings: [
+        {
+          category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+          threshold: 'BLOCK_NONE',
+        },
+        {
+          category: 'HARM_CATEGORY_HARASSMENT',
+          threshold: 'BLOCK_NONE',
+        },
+        {
+          category: 'HARM_CATEGORY_HATE_SPEECH',
+          threshold: 'BLOCK_NONE',
+        },
+        {
+          category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+          threshold: 'BLOCK_NONE',
+        },
+      ],
+    },
   });
 
   if (!media?.url) {

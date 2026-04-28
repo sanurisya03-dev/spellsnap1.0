@@ -20,15 +20,16 @@ const PronunciationOutputSchema = z.object({
   audioUrl: z.string().describe('Data URI of the pronunciation audio (WAV).'),
 });
 
+// Define prompt at top level
+const phonemePrompt = ai.definePrompt({
+  name: 'generatePhonemes',
+  input: { schema: z.object({ word: z.string() }) },
+  output: { schema: z.object({ ipa: z.string() }) },
+  prompt: 'You are a phonetic expert. Provide the International Phonetic Alphabet (IPA) representation for the word: "{{word}}". Return only the IPA in the JSON output.',
+});
+
 export async function getPronunciation(input: { word: string }): Promise<{ phonemes: string; audioUrl: string }> {
   // 1. Generate Phonemes (IPA)
-  const phonemePrompt = ai.definePrompt({
-    name: 'generatePhonemes',
-    input: { schema: z.object({ word: z.string() }) },
-    output: { schema: z.object({ ipa: z.string() }) },
-    prompt: 'You are a phonetic expert. Provide the International Phonetic Alphabet (IPA) representation for the word: "{{word}}". Return only the IPA in the JSON output.',
-  });
-
   const { output: phonemeOutput } = await phonemePrompt(input);
   const ipa = phonemeOutput?.ipa || '';
 

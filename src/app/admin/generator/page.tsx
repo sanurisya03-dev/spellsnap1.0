@@ -11,9 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { generateWordList, type GenerateWordListOutput } from "@/ai/flows/ai-powered-word-list-assistant";
 import { useGameStore, type Difficulty } from "@/lib/game-store";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AIGeneratorPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const { addCustomWord } = useGameStore();
   
   const [loading, setLoading] = useState(false);
@@ -39,22 +41,29 @@ export default function AIGeneratorPage() {
         learnerNeeds: form.learnerNeeds
       });
       setResults(output);
+      toast({ title: "Magic Complete! ✨", description: "Here are some word suggestions." });
     } catch (error) {
       console.error("AI Generation failed:", error);
+      toast({ variant: "destructive", title: "Error", description: "The AI is sleepy. Try again!" });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddWord = (wordObj: any, index: number) => {
-    addCustomWord({
-      word: wordObj.word.toUpperCase(),
-      definition: wordObj.definition,
-      exampleSentence: wordObj.exampleSentence,
-      theme: form.theme,
-      difficulty: form.targetDifficulty
-    });
-    setAddedIds(prev => new Set(Array.from(prev).concat([index.toString()])));
+  const handleAddWord = async (wordObj: any, index: number) => {
+    try {
+      await addCustomWord({
+        word: wordObj.word.toUpperCase(),
+        definition: wordObj.definition,
+        exampleSentence: wordObj.exampleSentence,
+        theme: form.theme,
+        difficulty: form.targetDifficulty
+      });
+      setAddedIds(prev => new Set(Array.from(prev).concat([index.toString()])));
+      toast({ title: "Word Added!" });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Save Failed", description: "Try signing in again." });
+    }
   };
 
   return (

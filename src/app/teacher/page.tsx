@@ -27,7 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useGameStore, Classroom, PupilProgress, Difficulty } from "@/lib/game-store";
 import { useUser, useFirestore, useCollection, useAuth } from "@/firebase";
-import { collection, doc, setDoc, query, where } from "firebase/firestore";
+import { collection, doc, addDoc, query, where, setDoc } from "firebase/firestore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -122,28 +122,29 @@ export default function TeacherDashboard() {
       createdAt: new Date().toISOString()
     };
 
-    const classroomRef = collection(db, 'classrooms');
-    const newDocRef = doc(classroomRef);
-
     try {
-      await setDoc(newDocRef, data);
+      const classroomRef = collection(db, 'classrooms');
+      await addDoc(classroomRef, data);
+      
       setIsCreateOpen(false);
       setNewClassName("");
-      toast({ title: "Class Created!", description: `Code: ${code}. Share this with your students!` });
+      toast({ 
+        title: "Class Created! 🎉", 
+        description: `Your new class code is: ${code}. Share this with your students!` 
+      });
     } catch (err: any) {
       console.error("Error creating class:", err);
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: newDocRef.path,
-        operation: 'create',
-        requestResourceData: data,
-      }));
-      toast({ variant: "destructive", title: "Creation Failed", description: "Check permissions or try again." });
+      toast({ 
+        variant: "destructive", 
+        title: "Oops! Creation Failed", 
+        description: "Please check your permissions or try again." 
+      });
     } finally {
       setIsCreating(false);
     }
   };
 
-  const toggleWordAssignment = (wordId: string) => {
+  const toggleWordAssignment = async (wordId: string) => {
     if (!db || !selectedClass) return;
     
     const current = selectedClass.assignedWordIds || [];
@@ -152,24 +153,36 @@ export default function TeacherDashboard() {
       : [...current, wordId];
     
     const docRef = doc(db, 'classrooms', selectedClass.id);
-    setDoc(docRef, { assignedWordIds: next }, { merge: true });
+    try {
+      await setDoc(docRef, { assignedWordIds: next }, { merge: true });
+    } catch (err) {
+      toast({ variant: "destructive", title: "Update Failed", description: "Could not update word assignments." });
+    }
   };
 
-  const handleAssignAll = () => {
+  const handleAssignAll = async () => {
     if (!db || !selectedClass) return;
     const allIds = filteredAssignments.map(w => w.id);
     const current = selectedClass.assignedWordIds || [];
     const next = Array.from(new Set([...current, ...allIds]));
-    setDoc(doc(db, 'classrooms', selectedClass.id), { assignedWordIds: next }, { merge: true });
-    toast({ title: "Words Assigned", description: `Added ${allIds.length} words to class.` });
+    try {
+      await setDoc(doc(db, 'classrooms', selectedClass.id), { assignedWordIds: next }, { merge: true });
+      toast({ title: "Words Assigned", description: `Added ${allIds.length} words to class.` });
+    } catch (err) {
+      toast({ variant: "destructive", title: "Failed to Assign", description: "Try again in a moment." });
+    }
   };
 
-  const handleRemoveAll = () => {
+  const handleRemoveAll = async () => {
     if (!db || !selectedClass) return;
     const allIdsToRemove = filteredAssignments.map(w => w.id);
     const next = (selectedClass.assignedWordIds || []).filter(id => !allIdsToRemove.includes(id));
-    setDoc(doc(db, 'classrooms', selectedClass.id), { assignedWordIds: next }, { merge: true });
-    toast({ title: "Words Removed", description: "Cleared selected words from class." });
+    try {
+      await setDoc(doc(db, 'classrooms', selectedClass.id), { assignedWordIds: next }, { merge: true });
+      toast({ title: "Words Removed", description: "Cleared selected words from class." });
+    } catch (err) {
+      toast({ variant: "destructive", title: "Failed to Clear", description: "Try again in a moment." });
+    }
   };
 
   const copyCode = (code: string) => {

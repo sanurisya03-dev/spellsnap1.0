@@ -13,7 +13,8 @@ import {
   query,
   where,
   getDocs,
-  limit
+  limit,
+  onSnapshot
 } from 'firebase/firestore';
 import { useFirestore, useUser, useCollection, useDoc } from '@/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -100,32 +101,31 @@ export function useGameStore() {
     return allWords;
   }, [allWords, activeClass]);
 
-  const updateStats = useCallback((updates: Partial<UserStats>) => {
-    if (!statsRef) return;
+  const updateStats = useCallback(async (updates: Partial<UserStats>) => {
+    if (!statsRef || !db || !user?.uid) return;
     
-    setDoc(statsRef, updates, { merge: true })
-      .catch((err) => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: statsRef.path,
-          operation: 'update',
-          requestResourceData: updates
-        } satisfies SecurityRuleContext));
-      });
+    try {
+      await setDoc(statsRef, updates, { merge: true });
 
-    if (user?.uid && firebaseStats?.activeClassId && db) {
-      const classProgressRef = doc(db, 'classrooms', firebaseStats.activeClassId, 'pupils', user.uid);
-      const classUpdates = {
-        stars: updates.stars ? increment(1) : increment(0),
-        wordsMastered: updates.wordsMastered ? increment(1) : increment(0),
-        pupilName: user?.displayName || "Pupil"
-      };
-      
-      setDoc(classProgressRef, classUpdates, { merge: true })
-        .catch(() => {});
+      if (firebaseStats?.activeClassId) {
+        const classProgressRef = doc(db, 'classrooms', firebaseStats.activeClassId, 'pupils', user.uid);
+        const classUpdates = {
+          stars: updates.stars ? increment(1) : increment(0),
+          wordsMastered: updates.wordsMastered ? increment(1) : increment(0),
+          pupilName: user?.displayName || "Pupil"
+        };
+        await setDoc(classProgressRef, classUpdates, { merge: true });
+      }
+    } catch (err: any) {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: statsRef.path,
+        operation: 'update',
+        requestResourceData: updates
+      } satisfies SecurityRuleContext));
     }
   }, [statsRef, user, firebaseStats?.activeClassId, db]);
 
-  const toggleWordAssignment = useCallback((wordId: string) => {
+  const toggleWordAssignment = useCallback(async (wordId: string) => {
     if (!db || !activeClass) return;
     const current = activeClass.assignedWordIds || [];
     const next = current.includes(wordId) 
@@ -133,14 +133,15 @@ export function useGameStore() {
       : [...current, wordId];
     
     const docRef = doc(db, 'classrooms', activeClass.id);
-    setDoc(docRef, { assignedWordIds: next }, { merge: true })
-      .catch((err) => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'update',
-          requestResourceData: { assignedWordIds: next }
-        } satisfies SecurityRuleContext));
-      });
+    try {
+      await setDoc(docRef, { assignedWordIds: next }, { merge: true });
+    } catch (err: any) {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: docRef.path,
+        operation: 'update',
+        requestResourceData: { assignedWordIds: next }
+      } satisfies SecurityRuleContext));
+    }
   }, [db, activeClass]);
 
   const addStars = useCallback((amount: number) => updateStats({ stars: increment(amount) }), [updateStats]);
@@ -148,12 +149,8 @@ export function useGameStore() {
   const addWordMastered = useCallback(() => updateStats({ wordsMastered: increment(1) }), [updateStats]);
 
   const joinClass = useCallback(async (code: string) => {
-    if (!db) {
-       console.error("Database not initialized");
-       return false;
-    }
-    if (!user?.uid) {
-       console.error("User not authenticated");
+    if (!db || !user?.uid) {
+       console.error("Database or User not ready for joining class");
        return false;
     }
     
@@ -165,7 +162,7 @@ export function useGameStore() {
       const snapshot = await getDocs(q);
       
       if (snapshot.empty) {
-        console.warn("Classroom query returned no results for code:", cleanCode);
+        console.warn("No classroom found for code:", cleanCode);
         return false;
       }
       
@@ -173,41 +170,41 @@ export function useGameStore() {
       const classId = classDoc.id;
       console.log("Found classroom:", classId);
       
-      // Update global user stats
-      const mainStatsRef = doc(db, 'users', user.uid, 'stats', 'main');
-      await setDoc(mainStatsRef, { activeClassId: classId }, { merge: true });
+      // Update the student's active class in their main stats
+      const userStatsRef = doc(db, 'users', user.uid, 'stats', 'main');
+      await setDoc(userStatsRef, { activeClassId: classId }, { merge: true });
       
-      // Create/Update pupil record in the specific classroom
-      const pRef = doc(db, 'classrooms', classId, 'pupils', user.uid);
-      await setDoc(pRef, { 
-        pupilName: user.displayName || "Explorer", 
-        stars: 0, 
-        wordsMastered: 0 
+      // Add or Update student profile in the specific classroom's pupils collection
+      const pupilRef = doc(db, 'classrooms', classId, 'pupils', user.uid);
+      await setDoc(pupilRef, {
+        pupilName: user.displayName || "Little Explorer",
+        stars: 0,
+        wordsMastered: 0
       }, { merge: true });
-      
+
       return true;
     } catch (error) {
-      console.error("Error joining class:", error);
+      console.error("Error during joinClass process:", error);
       return false;
     }
   }, [db, user]);
 
-  const leaveClass = useCallback(() => {
+  const leaveClass = useCallback(async () => {
     if (!statsRef) return;
-    setDoc(statsRef, { activeClassId: null }, { merge: true });
+    await setDoc(statsRef, { activeClassId: null }, { merge: true });
   }, [statsRef]);
 
-  const addCustomWord = useCallback((wordData: Omit<WordItem, 'id' | 'userId'>) => {
+  const addCustomWord = useCallback(async (wordData: Omit<WordItem, 'id' | 'userId'>) => {
     if (!db || !user?.uid) return;
     const wordRef = collection(db, 'words');
     const data = { ...wordData, userId: user.uid };
-    addDoc(wordRef, data);
+    await addDoc(wordRef, data);
   }, [db, user?.uid]);
 
-  const deleteCustomWord = useCallback((wordId: string) => {
+  const deleteCustomWord = useCallback(async (wordId: string) => {
     if (!db) return;
     const wordRef = doc(db, 'words', wordId);
-    deleteDoc(wordRef);
+    await deleteDoc(wordRef);
   }, [db]);
 
   const isLoaded = !userLoading;

@@ -20,7 +20,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { generateWordImage } from "@/ai/flows/generate-word-image";
 import { getPronunciation } from "@/ai/flows/pronunciation-flow";
-import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useAuth } from "@/firebase";
@@ -214,6 +213,11 @@ export default function AdminDashboard() {
                           {isGeneratingImage ? <Loader2 className="animate-spin" /> : <Sparkles className="text-primary h-5 w-5" />}
                         </Button>
                       </div>
+                      {newWord.imageUrl && (
+                        <div className="mt-2 relative w-full aspect-video rounded-xl overflow-hidden border-2 border-dashed">
+                          <img src={newWord.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -255,7 +259,7 @@ export default function AdminDashboard() {
         {filteredWords.map(word => (
           <Card key={word.id} className="rounded-[3rem] border-8 border-white shadow-2xl overflow-hidden group hover:-translate-y-2 transition-all cursor-pointer" onClick={() => playAudio(word.audioUrl, word.word)}>
             <div className="aspect-video relative bg-muted">
-              {word.imageUrl && <Image src={word.imageUrl} alt={word.word} fill className="object-cover" />}
+              {word.imageUrl && <img src={word.imageUrl} alt={word.word} className="w-full h-full object-cover" />}
               <Badge className="absolute top-4 left-4 bg-white/90 text-primary font-black uppercase text-xs">{word.difficulty}</Badge>
               {user && (
                 <Button variant="destructive" size="icon" onClick={(e) => handleDelete(e, word.id, word.word)} className="absolute top-4 right-4 h-10 w-10 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">

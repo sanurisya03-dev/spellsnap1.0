@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
@@ -8,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useGameStore, type WordItem, type Difficulty } from "@/lib/game-store";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 import confetti from "canvas-confetti";
 import { useUser } from "@/firebase";
 
@@ -154,8 +152,6 @@ function GameContent() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle Backspace here.
-      // Character input is handled by the hidden input's onChange to avoid double-firing.
       if (e.key === "Backspace") {
         e.preventDefault();
         handleBackspace();
@@ -204,11 +200,6 @@ function GameContent() {
     <div className="min-h-screen bg-background relative flex flex-col p-4 md:p-8" onClick={focusInput}>
       <div className="bg-animate" />
       
-      {/* 
-          Consolidated Input: 
-          Using a hidden input as the primary source of character events to ensure 
-          mobile keyboard compatibility and prevent double-triggering with window keydown.
-      */}
       <input 
         ref={hiddenInputRef} 
         type="text" 
@@ -218,7 +209,6 @@ function GameContent() {
         onChange={(e) => {
           const val = e.target.value.slice(-1);
           if (val) handleCharInput(val);
-          // Clear the value so the next character triggers another change event.
           e.target.value = "";
         }} 
       />
@@ -240,7 +230,7 @@ function GameContent() {
           <div className="w-full max-w-4xl text-center space-y-6 animate-in zoom-in">
             <div className="bg-white/80 p-6 md:p-10 rounded-[2rem] shadow-3xl border-4 border-white flex flex-col md:flex-row items-center gap-6">
               <div className="w-48 h-48 md:w-80 md:h-80 relative rounded-[2rem] overflow-hidden border-4 border-primary/10">
-                <Image src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word}/600/600`} alt={currentWord.word} fill className="object-cover" />
+                <img src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word}/600/600`} alt={currentWord.word} className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 space-y-4 text-center md:text-left">
                 <h2 className="text-6xl md:text-8xl font-black text-primary uppercase sparkle-text">{currentWord.word}</h2>
@@ -271,7 +261,7 @@ function GameContent() {
             <div className="bg-white/70 p-6 md:p-16 rounded-[3rem] border-8 border-white shadow-3xl space-y-12">
                <div className="flex justify-center gap-4">
                  <div className="h-20 w-20 relative rounded-2xl overflow-hidden border-4 border-white shadow-xl bg-muted">
-                   <Image src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word}/200/200`} alt="hint" fill className="object-cover" />
+                   <img src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word}/200/200`} alt="hint" className="w-full h-full object-cover" />
                  </div>
                  <Button onClick={playAudio} className="h-20 w-20 rounded-full bg-accent text-white shadow-xl"><Volume2 className="h-10 w-10" /></Button>
                </div>

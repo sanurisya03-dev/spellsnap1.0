@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, LogIn, Plus, Trash2, ArrowLeft, Search, GraduationCap, Loader2, Volume2, Sparkles, CheckCircle, Circle, MoreVertical, X, Lock, Settings2 } from "lucide-react";
+import { BookOpen, LogIn, Plus, Trash2, ArrowLeft, Search, GraduationCap, Loader2, Volume2, Sparkles, CheckCircle, Circle, MoreVertical, X, Lock, Settings2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useGameStore, type Difficulty } from "@/lib/game-store";
@@ -53,6 +53,27 @@ export default function AdminDashboard() {
   const [revealedWordId, setRevealedWordId] = useState<string | null>(null);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isScrolling = useRef(false);
+
+  // Audio helper for students
+  const playAudio = (url?: string, text?: string) => {
+    if (url) {
+      const audio = new Audio(url);
+      audio.play().catch(() => {
+        if (text) speakText(text);
+      });
+    } else if (text) {
+      speakText(text);
+    }
+  };
+
+  const speakText = (text: string) => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -134,7 +155,7 @@ export default function AdminDashboard() {
 
   const handleDelete = (e: React.MouseEvent, id: string, word: string) => {
     e.stopPropagation();
-    if (confirm(`Are you sure you want to delete "${word}" from the bank?`)) {
+    if (confirm(`Are you sure you want to delete "${word}"?`)) {
       deleteCustomWord(id);
       setRevealedWordId(null);
       toast({ title: "Word Deleted", variant: "destructive" });
@@ -180,9 +201,9 @@ export default function AdminDashboard() {
           </Button>
           <div>
             <h1 className="text-3xl font-black flex items-center gap-2">
-              <BookOpen className="text-orange-500 h-8 w-8" /> Curriculum Bank
+              <Eye className="text-accent h-8 w-8" /> Word Explorer
             </h1>
-            <p className="text-sm text-muted-foreground font-medium">Teachers: manage all spelling words here.</p>
+            <p className="text-sm text-muted-foreground font-medium">Browse and listen to every word in our curriculum.</p>
           </div>
         </div>
 
@@ -272,7 +293,7 @@ export default function AdminDashboard() {
             </Dialog>
           ) : (
             <Button onClick={handleSignIn} className="rounded-xl bg-primary hover:bg-primary/90 font-black px-8 h-14 shadow-xl border-4 border-white">
-              <LogIn className="mr-2 h-6 w-6" /> Teacher Login to Edit
+              <LogIn className="mr-2 h-6 w-6" /> Teacher Login
             </Button>
           )}
         </div>
@@ -281,19 +302,19 @@ export default function AdminDashboard() {
       <main className="space-y-8">
         <div className="bg-white/50 p-6 rounded-3xl border-4 border-dashed border-white text-center space-y-2 shadow-inner">
           <p className="text-sm font-black text-primary uppercase tracking-widest flex items-center justify-center gap-2">
-            <Settings2 className="h-5 w-5" /> Teacher Management Console
+            <Settings2 className="h-5 w-5" /> Explorer Mode
           </p>
           <p className="text-sm font-bold text-muted-foreground">
             {user 
-              ? "Tap '...', double-click, or hold a card to Assign words to your class or Delete custom words."
-              : "Sign in as a teacher to manage assignments and create custom word lists."}
+              ? "Tap '...', double-click, or hold a card to Assign words or Delete custom entries."
+              : "Tap any card to hear the word pronounced!"}
           </p>
         </div>
 
         <div className="relative">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground h-6 w-6" />
           <input 
-            placeholder="Search curriculum words, themes, or level..." 
+            placeholder="Search words, themes, or level..." 
             className="flex w-full rounded-[2rem] border-8 border-white bg-background pl-16 h-20 shadow-2xl text-xl font-black ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -309,16 +330,17 @@ export default function AdminDashboard() {
             return (
               <Card 
                 key={word.id} 
+                onClick={() => playAudio(word.audioUrl, word.word)}
                 onDoubleClick={() => handleDoubleClick(word.id)}
                 onTouchStart={() => handleTouchStart(word.id)}
                 onTouchEnd={handleTouchEnd}
                 className={cn(
                   "rounded-[3.5rem] border-8 shadow-2xl overflow-hidden flex flex-col group transition-all relative select-none cursor-pointer",
                   isAssigned ? "border-primary/40 bg-primary/5" : "border-white bg-background",
-                  isRevealed ? "scale-105 shadow-primary/20 ring-4 ring-primary" : "hover:-translate-y-2"
+                  isRevealed ? "scale-105 shadow-primary/20 ring-4 ring-primary" : "hover:-translate-y-2 active:scale-95"
                 )}
               >
-                {/* Actions Overlay */}
+                {/* Actions Overlay (Teacher Only) */}
                 {isRevealed && (
                   <div 
                     className="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-8 space-y-8 animate-in fade-in zoom-in duration-200"
@@ -361,7 +383,7 @@ export default function AdminDashboard() {
                           ) : (
                             <div className="text-center space-y-4 p-6 bg-white/10 rounded-[2rem] border-4 border-white/20">
                                <p className="text-white font-black text-lg">No Active Class Found</p>
-                               <Button variant="secondary" className="w-full h-14 rounded-xl font-black text-lg" onClick={() => router.push("/teacher")}>Create/Join Class First</Button>
+                               <Button variant="secondary" className="w-full h-14 rounded-xl font-black text-lg" onClick={() => router.push("/teacher")}>Dashboard</Button>
                             </div>
                           )}
                           
@@ -371,7 +393,7 @@ export default function AdminDashboard() {
                               onClick={(e) => handleDelete(e, word.id, word.word)}
                               className="w-full h-20 rounded-[1.5rem] font-black text-xl shadow-2xl transition-all active:scale-95 border-4 border-white/20"
                             >
-                              <Trash2 className="mr-3 h-6 w-6" /> DELETE FROM BANK
+                              <Trash2 className="mr-3 h-6 w-6" /> DELETE WORD
                             </Button>
                           )}
                         </>
@@ -396,17 +418,24 @@ export default function AdminDashboard() {
                   />
                   <div className="absolute top-6 left-6 flex flex-wrap gap-2">
                     <Badge className="bg-white/90 text-primary font-black uppercase text-[10px] shadow-lg border-2 border-primary/10 tracking-widest">{word.difficulty}</Badge>
-                    {isCustom && <Badge className="bg-secondary text-white font-black uppercase text-[10px] shadow-lg border-2 border-white/20 tracking-widest">Custom</Badge>}
                     {isAssigned && <Badge className="bg-accent text-white font-black uppercase text-[10px] shadow-lg border-2 border-white/20 tracking-widest">Assigned</Badge>}
                   </div>
 
-                  <div className="absolute top-6 right-6">
-                    <Button 
-                      onClick={(e) => toggleReveal(e, word.id)}
-                      className="bg-white/95 p-2 rounded-full shadow-2xl h-14 w-14 hover:bg-white text-primary flex items-center justify-center border-4 border-primary/10 transition-transform active:scale-90"
-                    >
-                      <MoreVertical className="h-8 w-8" />
-                    </Button>
+                  {user && (
+                    <div className="absolute top-6 right-6">
+                      <Button 
+                        onClick={(e) => toggleReveal(e, word.id)}
+                        className="bg-white/95 p-2 rounded-full shadow-2xl h-14 w-14 hover:bg-white text-primary flex items-center justify-center border-4 border-primary/10 transition-transform active:scale-90"
+                      >
+                        <MoreVertical className="h-8 w-8" />
+                      </Button>
+                    </div>
+                  )}
+                  
+                  <div className="absolute bottom-6 right-6 md:hidden">
+                    <div className="bg-white/80 p-3 rounded-full shadow-xl">
+                      <Volume2 className="h-6 w-6 text-accent" />
+                    </div>
                   </div>
                 </div>
 
@@ -414,7 +443,7 @@ export default function AdminDashboard() {
                   <div className="flex justify-between items-center">
                     <CardTitle className="text-4xl font-black text-primary uppercase tracking-tighter">{word.word}</CardTitle>
                     <div className="flex gap-2">
-                      {word.audioUrl && <Volume2 className="h-6 w-6 text-accent" />}
+                      <Volume2 className="h-6 w-6 text-accent group-hover:scale-125 transition-transform" />
                     </div>
                   </div>
                   {word.phonemes && <p className="text-xs font-black text-accent/70 tracking-[0.3em] uppercase mt-1">{word.phonemes}</p>}

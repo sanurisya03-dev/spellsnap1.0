@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { DoorOpen, ArrowLeft, Loader2, Sparkles, CheckCircle2, LogIn, Lock } from "lucide-react";
+import { DoorOpen, ArrowLeft, Loader2, Sparkles, CheckCircle2, LogIn, Lock, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { useGameStore } from "@/lib/game-store";
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useAuth } from "@/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import Link from "next/link";
 
 export default function JoinClassPage() {
   const router = useRouter();
@@ -118,6 +119,13 @@ export default function JoinClassPage() {
               {isLoggingIn ? <Loader2 className="animate-spin mr-2" /> : <LogIn className="mr-2 h-6 w-6" />}
               SIGN IN TO JOIN
             </Button>
+            <div className="pt-4 border-t-2 border-dashed">
+              <Link href="/admin">
+                <Button variant="ghost" className="text-muted-foreground font-black text-sm">
+                  <BookOpen className="mr-2 h-4 w-4" /> Just want to browse words?
+                </Button>
+              </Link>
+            </div>
           </Card>
         ) : (
           <Card className="rounded-[3rem] border-8 border-white shadow-3xl bg-white/80 backdrop-blur-2xl">
@@ -126,7 +134,7 @@ export default function JoinClassPage() {
                  <Sparkles className="h-10 w-10 text-accent" />
               </div>
               <CardTitle className="text-3xl font-black">Enter Class Code</CardTitle>
-              <CardDescription className="text-lg font-medium">Ask your teacher for the 6-character code!</CardDescription>
+              <CardDescription className="text-lg font-medium">Ask your teacher for the code!</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
               <div className="relative">
@@ -159,7 +167,9 @@ export default function JoinClassPage() {
         )}
 
         <footer className="text-center">
-           <p className="text-muted-foreground font-bold">You'll see your teacher's word lists as soon as you join.</p>
+           <Link href="/admin">
+              <Button variant="link" className="text-muted-foreground font-bold underline">Not ready for class? Explorer words instead.</Button>
+           </Link>
         </footer>
       </div>
     </div>

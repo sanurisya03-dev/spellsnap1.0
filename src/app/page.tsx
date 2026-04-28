@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles, Play, Award, Settings, Star, LogIn, LogOut, User, Loader2, Rocket, Camera, Lightbulb, Cloud, Sun, DoorOpen, Users, BookOpen, GraduationCap } from "lucide-react";
+import { Sparkles, Play, Award, Settings, Star, LogIn, LogOut, User, Loader2, Rocket, Camera, Lightbulb, Cloud, Sun, DoorOpen, Users, BookOpen, GraduationCap, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGameStore } from "@/lib/game-store";
@@ -108,43 +108,48 @@ export default function LobbyPage() {
             Welcome to <span className="sparkle-text">SpellSnap!</span>
           </h2>
           <p className="text-xl md:text-2xl font-bold text-muted-foreground max-w-2xl mx-auto">
-            Choose your portal to start snapping words or managing your classroom.
+            Ready to explore words or manage your classroom?
           </p>
         </section>
 
         {/* Role Selection Cards */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Student Portal */}
-          <Link href="/join">
-            <Card className="rounded-[3rem] border-8 border-white bg-white/60 backdrop-blur-2xl shadow-3xl overflow-hidden group hover:scale-105 transition-all cursor-pointer h-full">
-              <CardContent className="p-10 flex flex-col items-center text-center space-y-6">
-                <div className="bg-accent p-8 rounded-[2rem] shadow-xl group-hover:rotate-6 transition-transform">
-                  <Play className="h-16 w-16 text-white fill-current" />
-                </div>
-                <div>
-                  <h3 className="text-4xl font-black text-accent uppercase">I'm a Student</h3>
-                  <p className="text-lg font-bold text-muted-foreground mt-2">Join a class, earn stars, and play fun spelling games!</p>
-                </div>
-                <Button className="btn-bouncy bg-accent text-white h-16 px-12 text-xl w-full">Enter Student Portal</Button>
-              </CardContent>
-            </Card>
-          </Link>
+          <Card className="rounded-[3rem] border-8 border-white bg-white/60 backdrop-blur-2xl shadow-3xl overflow-hidden group h-full">
+            <CardContent className="p-10 flex flex-col items-center text-center space-y-6">
+              <div className="bg-accent p-8 rounded-[2rem] shadow-xl group-hover:rotate-6 transition-transform">
+                <Play className="h-16 w-16 text-white fill-current" />
+              </div>
+              <div>
+                <h3 className="text-4xl font-black text-accent uppercase">Student</h3>
+                <p className="text-lg font-bold text-muted-foreground mt-2">Join a class to earn stars, or explore words right now!</p>
+              </div>
+              <div className="w-full space-y-4">
+                <Link href="/join" className="block">
+                  <Button className="btn-bouncy bg-accent text-white h-16 px-12 text-xl w-full">Join My Class</Button>
+                </Link>
+                <Link href="/admin" className="block">
+                  <Button variant="outline" className="btn-bouncy border-4 border-accent text-accent bg-white h-16 px-12 text-xl w-full shadow-none hover:bg-accent/5">Browse Word Explorer</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Teacher Portal */}
-          <Link href="/teacher">
-            <Card className="rounded-[3rem] border-8 border-white bg-white/60 backdrop-blur-2xl shadow-3xl overflow-hidden group hover:scale-105 transition-all cursor-pointer h-full">
-              <CardContent className="p-10 flex flex-col items-center text-center space-y-6">
-                <div className="bg-primary p-8 rounded-[2rem] shadow-xl group-hover:-rotate-6 transition-transform">
-                  <GraduationCap className="h-16 w-16 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-4xl font-black text-primary uppercase">I'm a Teacher</h3>
-                  <p className="text-lg font-bold text-muted-foreground mt-2">Create classes, assign words, and track pupil progress!</p>
-                </div>
-                <Button className="btn-bouncy bg-primary text-white h-16 px-12 text-xl w-full">Enter Teacher Portal</Button>
-              </CardContent>
-            </Card>
-          </Link>
+          <Card className="rounded-[3rem] border-8 border-white bg-white/60 backdrop-blur-2xl shadow-3xl overflow-hidden group h-full">
+            <CardContent className="p-10 flex flex-col items-center text-center space-y-6">
+              <div className="bg-primary p-8 rounded-[2rem] shadow-xl group-hover:-rotate-6 transition-transform">
+                <GraduationCap className="h-16 w-16 text-white" />
+              </div>
+              <div>
+                <h3 className="text-4xl font-black text-primary uppercase">Teacher</h3>
+                <p className="text-lg font-bold text-muted-foreground mt-2">Create classes, assign words, and track pupil progress!</p>
+              </div>
+              <Link href="/teacher" className="block w-full">
+                <Button className="btn-bouncy bg-primary text-white h-16 px-12 text-xl w-full">Teacher Dashboard</Button>
+              </Link>
+            </CardContent>
+          </Card>
         </section>
 
         {/* Quick Access Grid */}
@@ -166,7 +171,7 @@ export default function LobbyPage() {
              <Link href="/admin" className="block">
                 <Button variant="outline" className="w-full h-24 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg p-2 group">
                    <BookOpen className="h-6 w-6 text-orange-500 group-hover:scale-125 transition-transform" />
-                   <span className="text-[10px] font-black uppercase text-orange-600">Word Bank</span>
+                   <span className="text-[10px] font-black uppercase text-orange-600">Word Explorer</span>
                 </Button>
              </Link>
              <Link href="/admin/generator" className="block">

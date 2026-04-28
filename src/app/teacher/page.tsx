@@ -57,6 +57,7 @@ export default function TeacherDashboard() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newClassName, setNewClassName] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [assignmentSearch, setAssignmentSearch] = useState("");
   const [assignmentFilter, setAssignmentFilter] = useState<Difficulty | "all">("all");
 
@@ -108,9 +109,10 @@ export default function TeacherDashboard() {
     });
   }, [allWords, assignmentSearch, assignmentFilter]);
 
-  const handleCreateClass = () => {
+  const handleCreateClass = async () => {
     if (!db || !user?.uid || !newClassName.trim()) return;
 
+    setIsCreating(true);
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
     const data = {
       name: newClassName.trim(),
@@ -123,17 +125,22 @@ export default function TeacherDashboard() {
     const classroomRef = collection(db, 'classrooms');
     const newDocRef = doc(classroomRef);
 
-    setIsCreateOpen(false);
-    setNewClassName("");
-    toast({ title: "Class Created!", description: `Code: ${code}` });
-
-    setDoc(newDocRef, data).catch(async (err) => {
+    try {
+      await setDoc(newDocRef, data);
+      setIsCreateOpen(false);
+      setNewClassName("");
+      toast({ title: "Class Created!", description: `Code: ${code}. Share this with your students!` });
+    } catch (err: any) {
+      console.error("Error creating class:", err);
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: newDocRef.path,
         operation: 'create',
         requestResourceData: data,
       }));
-    });
+      toast({ variant: "destructive", title: "Creation Failed", description: "Check permissions or try again." });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const toggleWordAssignment = (wordId: string) => {
@@ -216,7 +223,11 @@ export default function TeacherDashboard() {
                 <DialogDescription className="text-lg font-medium">Give your new class a name to get started.</DialogDescription>
               </DialogHeader>
               <div className="py-8"><Input placeholder="e.g., Year 3 Blue" value={newClassName} onChange={(e) => setNewClassName(e.target.value)} className="h-16 text-xl rounded-2xl border-4 border-accent/20 focus:ring-accent" /></div>
-              <DialogFooter><Button onClick={handleCreateClass} className="w-full btn-bouncy bg-primary text-white h-16 rounded-2xl text-xl font-black shadow-xl">CREATE CLASS!</Button></DialogFooter>
+              <DialogFooter>
+                <Button onClick={handleCreateClass} disabled={isCreating} className="w-full btn-bouncy bg-primary text-white h-16 rounded-2xl text-xl font-black shadow-xl">
+                  {isCreating ? <Loader2 className="animate-spin mr-2" /> : "CREATE CLASS!"}
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>

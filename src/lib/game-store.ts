@@ -148,32 +148,48 @@ export function useGameStore() {
   const addWordMastered = useCallback(() => updateStats({ wordsMastered: increment(1) }), [updateStats]);
 
   const joinClass = useCallback(async (code: string) => {
-    if (!db || !user?.uid) return false;
-    
-    const cleanCode = code.trim().toUpperCase();
-    const q = query(collection(db, 'classrooms'), where('code', '==', cleanCode), limit(1));
-    const snapshot = await getDocs(q);
-    
-    if (snapshot.empty) {
-      console.warn("Classroom query returned no results for code:", cleanCode);
-      return false;
+    if (!db) {
+       console.error("Database not initialized");
+       return false;
+    }
+    if (!user?.uid) {
+       console.error("User not authenticated");
+       return false;
     }
     
-    const classDoc = snapshot.docs[0];
+    const cleanCode = code.trim().toUpperCase();
+    console.log("Searching for class with code:", cleanCode);
     
-    // Update global user stats
-    const mainStatsRef = doc(db, 'users', user.uid, 'stats', 'main');
-    await setDoc(mainStatsRef, { activeClassId: classDoc.id }, { merge: true });
-    
-    // Create/Update pupil record in the specific classroom
-    const pRef = doc(db, 'classrooms', classDoc.id, 'pupils', user.uid);
-    await setDoc(pRef, { 
-      pupilName: user.displayName || "Explorer", 
-      stars: 0, 
-      wordsMastered: 0 
-    }, { merge: true });
-    
-    return true;
+    try {
+      const q = query(collection(db, 'classrooms'), where('code', '==', cleanCode), limit(1));
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
+        console.warn("Classroom query returned no results for code:", cleanCode);
+        return false;
+      }
+      
+      const classDoc = snapshot.docs[0];
+      const classId = classDoc.id;
+      console.log("Found classroom:", classId);
+      
+      // Update global user stats
+      const mainStatsRef = doc(db, 'users', user.uid, 'stats', 'main');
+      await setDoc(mainStatsRef, { activeClassId: classId }, { merge: true });
+      
+      // Create/Update pupil record in the specific classroom
+      const pRef = doc(db, 'classrooms', classId, 'pupils', user.uid);
+      await setDoc(pRef, { 
+        pupilName: user.displayName || "Explorer", 
+        stars: 0, 
+        wordsMastered: 0 
+      }, { merge: true });
+      
+      return true;
+    } catch (error) {
+      console.error("Error joining class:", error);
+      return false;
+    }
   }, [db, user]);
 
   const leaveClass = useCallback(() => {

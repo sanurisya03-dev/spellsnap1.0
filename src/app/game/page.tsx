@@ -105,6 +105,12 @@ export default function GamePage() {
     playAudio();
   };
 
+  const focusInput = () => {
+    if (hiddenInputRef.current) {
+      hiddenInputRef.current.focus();
+    }
+  };
+
   const startSpellingChallenge = () => {
     if (!currentWord) return;
     
@@ -130,7 +136,7 @@ export default function GamePage() {
     setGameState("playing");
     
     // Focus hidden input for mobile keyboard
-    setTimeout(() => hiddenInputRef.current?.focus(), 100);
+    setTimeout(focusInput, 100);
   };
 
   const handleCharInput = useCallback((char: string) => {
@@ -179,6 +185,18 @@ export default function GamePage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
+  // Keep focus on hidden input during playing state
+  useEffect(() => {
+    if (gameState === "playing") {
+      const interval = setInterval(() => {
+        if (document.activeElement !== hiddenInputRef.current) {
+          focusInput();
+        }
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, [gameState]);
+
   useEffect(() => {
     if (gameState === "playing" && currentWord && !userInput.includes("")) {
       const typed = userInput.join("");
@@ -212,8 +230,6 @@ export default function GamePage() {
     }
   };
 
-  const focusInput = () => hiddenInputRef.current?.focus();
-
   if (!isLoaded || (wordsToPlay.length === 0 && gameState !== "finished")) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -229,20 +245,20 @@ export default function GamePage() {
         <Cloud className="floating-element text-accent/20" size={120} style={{ bottom: '20%', right: '15%' }} />
       </div>
 
-      {/* Hidden input for mobile keyboard trigger */}
+      {/* Hidden input for mobile keyboard trigger - made slightly more 'active' for browsers */}
       <input 
         ref={hiddenInputRef}
         type="text" 
-        className="opacity-0 absolute -z-10 h-0 w-0"
+        style={{ position: 'absolute', opacity: 0, height: '1px', width: '1px', top: '0', left: '0', padding: 0, margin: 0, border: 'none' }}
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="none"
         spellCheck="false"
+        value=""
         onChange={(e) => {
           const val = e.target.value;
           if (val) {
             handleCharInput(val.slice(-1));
-            e.target.value = ""; // Clear for next input
           }
         }}
         onKeyDown={(e) => {
@@ -389,7 +405,7 @@ export default function GamePage() {
 
               <div className="md:hidden pt-4">
                  <Button variant="outline" size="sm" onClick={focusInput} className="rounded-full text-[10px] font-black uppercase tracking-widest h-8 border-2">
-                   <Keyboard className="mr-1 h-3 w-3" /> Tap to show keyboard
+                   <Keyboard className="mr-1 h-3 w-3" /> Keyboard
                  </Button>
               </div>
             </div>

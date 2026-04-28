@@ -154,13 +154,16 @@ function GameContent() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Backspace") handleBackspace();
-      else if (e.key === "Tab") { /* ignore */ }
-      else handleCharInput(e.key);
+      // Only handle Backspace here.
+      // Character input is handled by the hidden input's onChange to avoid double-firing.
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        handleBackspace();
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleCharInput, handleBackspace]);
+  }, [handleBackspace]);
 
   useEffect(() => {
     if (gameState === "playing" && currentWord && !userInput.includes("")) {
@@ -200,15 +203,22 @@ function GameContent() {
   return (
     <div className="min-h-screen bg-background relative flex flex-col p-4 md:p-8" onClick={focusInput}>
       <div className="bg-animate" />
+      
+      {/* 
+          Consolidated Input: 
+          Using a hidden input as the primary source of character events to ensure 
+          mobile keyboard compatibility and prevent double-triggering with window keydown.
+      */}
       <input 
         ref={hiddenInputRef} 
         type="text" 
-        className="absolute opacity-0 pointer-events-none" 
+        className="fixed opacity-0 pointer-events-none -top-10" 
         value="" 
         autoFocus
         onChange={(e) => {
           const val = e.target.value.slice(-1);
           if (val) handleCharInput(val);
+          // Clear the value so the next character triggers another change event.
           e.target.value = "";
         }} 
       />

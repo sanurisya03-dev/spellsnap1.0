@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles, Play, Award, Settings, Star, LogIn, LogOut, User, Loader2, Rocket, Camera, Lightbulb, Cloud, Sun, DoorOpen, Users, BookOpen, GraduationCap, Search } from "lucide-react";
+import { Sparkles, Play, Award, Settings, Star, LogIn, LogOut, User, Loader2, Rocket, Camera, Lightbulb, Cloud, Sun, Users, BookOpen, GraduationCap, Search, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGameStore } from "@/lib/game-store";
@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LobbyPage() {
-  const { stats, isLoaded, activeClass, leaveClass, loadingData } = useGameStore();
+  const { stats, isLoaded, loadingData } = useGameStore();
   const { user, loading: userLoading } = useUser();
   const auth = useAuth();
   const { toast } = useToast();
@@ -24,15 +24,8 @@ export default function LobbyPage() {
       await signInWithPopup(auth, provider);
       toast({ title: "Welcome back!", description: "Ready to snap some words?" });
     } catch (error: any) {
-      if (error.code === 'auth/unauthorized-domain') {
-        toast({
-          variant: "destructive",
-          title: "Domain Not Authorized",
-          description: "Please add this domain to Authorized Domains in the Firebase Console.",
-        });
-      } else {
-        console.error("Sign in failed:", error);
-      }
+      console.error("Sign in failed:", error);
+      toast({ variant: "destructive", title: "Login Failed", description: "Could not sign in." });
     }
   };
 
@@ -84,7 +77,6 @@ export default function LobbyPage() {
             <div className="flex items-center gap-2 md:gap-4 bg-white/90 backdrop-blur-xl p-1.5 md:p-3 pl-3 md:pl-6 rounded-full border-2 md:border-4 border-white shadow-xl">
               <div className="flex flex-col text-right">
                 <span className="font-black hidden sm:block text-primary text-sm md:text-base leading-none">{user.displayName}</span>
-                {activeClass && <span className="text-[8px] md:text-[10px] font-bold text-accent uppercase tracking-wider">{activeClass.name}</span>}
               </div>
               <Avatar className="h-8 w-8 md:h-12 md:w-12 border-2 md:border-4 border-primary">
                 <AvatarImage src={user.photoURL || ""} />
@@ -108,13 +100,11 @@ export default function LobbyPage() {
             Welcome to <span className="sparkle-text">SpellSnap!</span>
           </h2>
           <p className="text-xl md:text-2xl font-bold text-muted-foreground max-w-2xl mx-auto">
-            Ready to explore words or manage your classroom?
+            The fun way to master spelling together.
           </p>
         </section>
 
-        {/* Role Selection Cards */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Student Portal */}
           <Card className="rounded-[3rem] border-8 border-white bg-white/60 backdrop-blur-2xl shadow-3xl overflow-hidden group h-full">
             <CardContent className="p-10 flex flex-col items-center text-center space-y-6">
               <div className="bg-accent p-8 rounded-[2rem] shadow-xl group-hover:rotate-6 transition-transform">
@@ -122,12 +112,16 @@ export default function LobbyPage() {
               </div>
               <div>
                 <h3 className="text-4xl font-black text-accent uppercase">Student</h3>
-                <p className="text-lg font-bold text-muted-foreground mt-2">Join a class to earn stars, or explore words right now!</p>
+                <p className="text-lg font-bold text-muted-foreground mt-2">Sign in to track your stars and master spelling!</p>
               </div>
               <div className="w-full space-y-4">
-                <Link href="/join" className="block">
-                  <Button className="btn-bouncy bg-accent text-white h-16 px-12 text-xl w-full">Join My Class</Button>
-                </Link>
+                {user ? (
+                   <Link href="/game" className="block w-full">
+                    <Button className="btn-bouncy bg-accent text-white h-16 px-12 text-xl w-full">START PLAYING!</Button>
+                  </Link>
+                ) : (
+                  <Button onClick={handleSignIn} className="btn-bouncy bg-accent text-white h-16 px-12 text-xl w-full">SIGN IN TO PLAY</Button>
+                )}
                 <Link href="/admin" className="block">
                   <Button variant="outline" className="btn-bouncy border-4 border-accent text-accent bg-white h-16 px-12 text-xl w-full shadow-none hover:bg-accent/5">Browse Word Explorer</Button>
                 </Link>
@@ -135,7 +129,6 @@ export default function LobbyPage() {
             </CardContent>
           </Card>
 
-          {/* Teacher Portal */}
           <Card className="rounded-[3rem] border-8 border-white bg-white/60 backdrop-blur-2xl shadow-3xl overflow-hidden group h-full">
             <CardContent className="p-10 flex flex-col items-center text-center space-y-6">
               <div className="bg-primary p-8 rounded-[2rem] shadow-xl group-hover:-rotate-6 transition-transform">
@@ -143,19 +136,21 @@ export default function LobbyPage() {
               </div>
               <div>
                 <h3 className="text-4xl font-black text-primary uppercase">Teacher</h3>
-                <p className="text-lg font-bold text-muted-foreground mt-2">Create classes, assign words, and track pupil progress!</p>
+                <p className="text-lg font-bold text-muted-foreground mt-2">Manage the words your students learn and use AI to build lists.</p>
               </div>
-              <Link href="/teacher" className="block w-full">
-                <Button className="btn-bouncy bg-primary text-white h-16 px-12 text-xl w-full">Teacher Dashboard</Button>
+              <Link href="/admin" className="block w-full">
+                <Button className="btn-bouncy bg-primary text-white h-16 px-12 text-xl w-full">Manage Word Bank</Button>
+              </Link>
+              <Link href="/admin/generator" className="block w-full">
+                <Button variant="outline" className="btn-bouncy border-4 border-primary text-primary bg-white h-16 px-12 text-xl w-full shadow-none">AI Word Assistant</Button>
               </Link>
             </CardContent>
           </Card>
         </section>
 
-        {/* Quick Access Grid */}
         <section className="pt-8">
           <h4 className="text-center font-black text-sm uppercase tracking-[0.3em] text-muted-foreground mb-8">Quick Access</h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
              <Link href="/game?difficulty=beginner" className="block">
                 <Button variant="outline" className="w-full h-24 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg p-2 group">
                    <Rocket className="h-6 w-6 text-primary group-hover:scale-125 transition-transform" />
@@ -178,12 +173,6 @@ export default function LobbyPage() {
                 <Button variant="outline" className="w-full h-24 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg p-2 group">
                    <Sparkles className="h-6 w-6 text-yellow-500 group-hover:scale-125 transition-transform" />
                    <span className="text-[10px] font-black uppercase text-yellow-600">AI Magic</span>
-                </Button>
-             </Link>
-             <Link href="/teacher" className="block">
-                <Button variant="outline" className="w-full h-24 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg p-2 group">
-                   <Settings className="h-6 w-6 text-accent group-hover:scale-125 transition-transform" />
-                   <span className="text-[10px] font-black uppercase text-accent">Classes</span>
                 </Button>
              </Link>
           </div>

@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, LogIn, Plus, Trash2, ArrowLeft, Search, Loader2, Volume2, Sparkles, Eye, X } from "lucide-react";
+import { BookOpen, LogIn, Plus, Trash2, ArrowLeft, Search, Loader2, Volume2, Sparkles, Eye, X, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -95,10 +94,10 @@ export default function AdminDashboard() {
     try {
       const { imageUrl } = await generateWordImage({ word: newWord.word, theme: newWord.theme });
       setNewWord(prev => ({ ...prev, imageUrl }));
-      toast({ title: "Image Generated!" });
+      toast({ title: "Magic Image Ready!" });
     } catch (error) {
       console.error(error);
-      toast({ variant: "destructive", title: "AI Error", description: "Failed to create an image." });
+      toast({ variant: "destructive", title: "AI Error", description: "Failed to create an image. Try manual URL?" });
     } finally {
       setIsGeneratingImage(false);
     }
@@ -113,7 +112,7 @@ export default function AdminDashboard() {
     try {
       const { phonemes, audioUrl } = await getPronunciation({ word: newWord.word });
       setNewWord(prev => ({ ...prev, phonemes, audioUrl }));
-      toast({ title: "Sound Generated!" });
+      toast({ title: "Magic Sound Ready!" });
     } catch (error) {
       console.error(error);
       toast({ variant: "destructive", title: "AI Error", description: "Failed to generate pronunciation." });
@@ -182,31 +181,49 @@ export default function AdminDashboard() {
                 <DialogContent className="rounded-[3rem] p-8 max-w-2xl bg-white border-8 border-white shadow-3xl">
                   <DialogHeader><DialogTitle className="text-3xl font-black">NEW WORD</DialogTitle></DialogHeader>
                   <div className="grid gap-6 py-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="font-bold">Word</Label>
-                        <input className="flex h-12 w-full rounded-xl border-4 border-primary/10 px-4 font-bold" value={newWord.word} onChange={e => setNewWord({...newWord, word: e.target.value.toUpperCase()})} placeholder="E.G. APPLE" />
+                        <Label className="font-bold uppercase tracking-widest text-xs">Word</Label>
+                        <input className="flex h-12 w-full rounded-xl border-4 border-primary/10 px-4 font-bold uppercase" value={newWord.word} onChange={e => setNewWord({...newWord, word: e.target.value.toUpperCase()})} placeholder="E.G. APPLE" />
                       </div>
                       <div className="space-y-2">
-                        <Label className="font-bold">Difficulty Level</Label>
+                        <Label className="font-bold uppercase tracking-widest text-xs">Difficulty</Label>
                         <Select value={newWord.difficulty} onValueChange={(v: Difficulty) => setNewWord({...newWord, difficulty: v})}>
                           <SelectTrigger className="h-12 border-4 border-primary/10 rounded-xl"><SelectValue /></SelectTrigger>
                           <SelectContent><SelectItem value="beginner">Beginner</SelectItem><SelectItem value="intermediate">Explorer</SelectItem><SelectItem value="advanced">Wizard</SelectItem></SelectContent>
                         </Select>
                       </div>
                     </div>
-                    <div className="flex gap-4">
-                      <Button variant="outline" onClick={handleAIGenerateImage} disabled={isGeneratingImage || !newWord.word} className="flex-1 h-12 rounded-xl font-bold border-2 border-secondary/20">
-                        {isGeneratingImage ? <Loader2 className="animate-spin h-5 w-5" /> : <Sparkles className="h-5 w-5 mr-2 text-primary" />} Magic Image
-                      </Button>
-                      <Button variant="outline" onClick={handleAIGeneratePronunciation} disabled={isGeneratingPronunciation || !newWord.word} className="flex-1 h-12 rounded-xl font-bold border-2 border-secondary/20">
-                        {isGeneratingPronunciation ? <Loader2 className="animate-spin h-5 w-5" /> : <Volume2 className="h-5 w-5 mr-2 text-primary" />} Magic Sound
-                      </Button>
-                    </div>
+
                     <div className="space-y-2">
-                      <Label className="font-bold">What does it mean?</Label>
-                      <Textarea value={newWord.definition} onChange={e => setNewWord({...newWord, definition: e.target.value})} className="rounded-xl border-2" placeholder="Describe the word simply..." />
+                      <Label className="font-bold uppercase tracking-widest text-xs">Image URL (or use Magic button)</Label>
+                      <div className="flex gap-2">
+                        <input 
+                          className="flex h-12 w-full rounded-xl border-4 border-primary/10 px-4 font-bold" 
+                          value={newWord.imageUrl} 
+                          onChange={e => setNewWord({...newWord, imageUrl: e.target.value})} 
+                          placeholder="Paste image link here..." 
+                        />
+                        <Button 
+                          variant="outline" 
+                          onClick={handleAIGenerateImage} 
+                          disabled={isGeneratingImage || !newWord.word} 
+                          className="h-12 w-12 rounded-xl border-4 border-primary/10 p-0 shrink-0"
+                          title="Generate AI Illustration"
+                        >
+                          {isGeneratingImage ? <Loader2 className="animate-spin" /> : <Sparkles className="text-primary h-5 w-5" />}
+                        </Button>
+                      </div>
                     </div>
+
+                    <div className="space-y-2">
+                      <Label className="font-bold uppercase tracking-widest text-xs">Definition</Label>
+                      <Textarea value={newWord.definition} onChange={e => setNewWord({...newWord, definition: e.target.value})} className="rounded-xl border-2 min-h-[80px]" placeholder="Describe the word simply..." />
+                    </div>
+
+                    <Button variant="outline" onClick={handleAIGeneratePronunciation} disabled={isGeneratingPronunciation || !newWord.word} className="w-full h-12 rounded-xl font-bold border-2 border-secondary/20">
+                      {isGeneratingPronunciation ? <Loader2 className="animate-spin h-5 w-5" /> : <Volume2 className="h-5 w-5 mr-2 text-primary" />} Generate British Sound
+                    </Button>
                   </div>
                   <DialogFooter>
                     <Button onClick={handleAddWord} disabled={isSaving} className="w-full btn-bouncy bg-primary text-white h-16 rounded-2xl text-xl font-black shadow-xl">

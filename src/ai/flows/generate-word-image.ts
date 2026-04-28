@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview An AI flow to generate educational illustrations for spelling words.
@@ -21,7 +20,7 @@ const GenerateImageOutputSchema = z.object({
 export async function generateWordImage(input: { word: string; theme?: string }): Promise<{ imageUrl: string }> {
   const { media } = await ai.generate({
     model: 'googleai/imagen-4.0-fast-generate-001',
-    prompt: `A cute, colorful, and friendly educational illustration for children of the word: "${input.word}". ${input.theme ? `Theme: ${input.theme}.` : ''} High quality, simple 2D or 3D cartoon style, white background, suitable for a primary school spelling app.`,
+    prompt: `A cute, colorful, and friendly educational illustration for children of the word: "${input.word}". ${input.theme ? `Theme: ${input.theme}.` : ''} High quality, simple 2D or 3D cartoon style, white background, no text, suitable for a primary school spelling app.`,
     config: {
       safetySettings: [
         {
@@ -38,6 +37,10 @@ export async function generateWordImage(input: { word: string; theme?: string })
         },
         {
           category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+          threshold: 'BLOCK_NONE',
+        },
+        {
+          category: 'HARM_CATEGORY_CIVIC_INTEGRITY',
           threshold: 'BLOCK_NONE',
         },
       ],

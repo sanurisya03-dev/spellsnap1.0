@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview AI flow to generate phonetic pronunciation (IPA) and audio for a word.
@@ -7,6 +6,7 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'genkit';
 import wav from 'wav';
 
@@ -19,22 +19,30 @@ const PronunciationOutputSchema = z.object({
   audioUrl: z.string().describe('Data URI of the pronunciation audio (WAV).'),
 });
 
-// Define prompt at top level
-const phonemePrompt = ai.definePrompt({
-  name: 'generatePhonemes',
-  input: { schema: z.object({ word: z.string() }) },
-  output: { schema: z.object({ ipa: z.string() }) },
-  prompt: 'Provide the International Phonetic Alphabet (IPA) representation for the word: "{{word}}".',
-});
-
 export async function getPronunciation(input: { word: string }): Promise<{ phonemes: string; audioUrl: string }> {
-  // 1. Generate Phonemes (IPA)
-  const { output: phonemeOutput } = await phonemePrompt(input);
+  // 1. Generate Phonemes (IPA) using direct generate call for reliability
+  const { output: phonemeOutput } = await ai.generate({
+    model: 'googleai/gemini-2.5-flash',
+    prompt: `Provide the International Phonetic Alphabet (IPA) representation for the word: "${input.word}". Return ONLY the IPA symbols.`,
+    output: {
+      schema: z.object({ ipa: z.string() })
+    },
+    config: {
+      safetySettings: [
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: 'BLOCK_NONE' },
+      ]
+    }
+  });
+
   const ipa = phonemeOutput?.ipa || '';
 
   // 2. Generate Audio using TTS
   const { media } = await ai.generate({
-    model: 'googleai/gemini-2.5-flash-preview-tts',
+    model: googleAI.model('gemini-2.5-flash-preview-tts'),
     config: {
       responseModalities: ['AUDIO'],
       speechConfig: {
@@ -42,6 +50,13 @@ export async function getPronunciation(input: { word: string }): Promise<{ phone
           prebuiltVoiceConfig: { voiceName: 'Algenib' },
         },
       },
+      safetySettings: [
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: 'BLOCK_NONE' },
+      ]
     },
     prompt: `Pronounce the word: ${input.word}`,
   });

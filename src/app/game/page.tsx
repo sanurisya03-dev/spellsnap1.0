@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
@@ -44,12 +45,19 @@ function GameContent() {
         filtered = playableWords;
     }
 
-    // Shuffle the available words
+    // Shuffle ALL available words - ensure no slicing occurs here
     const shuffled = [...filtered].sort(() => 0.5 - Math.random());
     setWordsToPlay(shuffled);
   }, [playableWords, difficulty, isLoaded, wordsToPlay.length]);
 
-  const currentWord = useMemo(() => wordsToPlay[currentWordIndex], [wordsToPlay, currentWordIndex]);
+  const currentWord = useMemo(() => {
+    if (!wordsToPlay[currentWordIndex]) return null;
+    // Strictly trim the word to ensure blank counts are 100% accurate
+    return {
+      ...wordsToPlay[currentWordIndex],
+      word: wordsToPlay[currentWordIndex].word.trim()
+    };
+  }, [wordsToPlay, currentWordIndex]);
 
   const playSfx = (type: 'success' | 'fail') => {
     const urls = {
@@ -74,7 +82,6 @@ function GameContent() {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text.toLowerCase());
       utterance.rate = 0.8;
-      // Set to British voice if available
       const voices = window.speechSynthesis.getVoices();
       const ukVoice = voices.find(v => v.lang.includes('GB'));
       if (ukVoice) utterance.voice = ukVoice;
@@ -116,17 +123,18 @@ function GameContent() {
 
   const startSpellingChallenge = () => {
     if (!currentWord) return;
-    const indices = Array.from({ length: currentWord.word.length }, (_, i) => i);
+    const cleanWord = currentWord.word.trim();
+    const indices = Array.from({ length: cleanWord.length }, (_, i) => i);
     let toHide: number[] = [];
-    if (difficulty === "advanced") toHide = indices;
-    else if (difficulty === "intermediate") toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, Math.ceil(currentWord.word.length / 2));
-    else toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, Math.min(currentWord.word.length - 1, 2));
     
-    // Ensure at least one letter is hidden
-    if (toHide.length === 0) toHide = [Math.floor(Math.random() * currentWord.word.length)];
+    if (difficulty === "advanced") toHide = indices;
+    else if (difficulty === "intermediate") toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, Math.ceil(cleanWord.length / 2));
+    else toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, Math.min(cleanWord.length - 1, 2));
+    
+    if (toHide.length === 0) toHide = [Math.floor(Math.random() * cleanWord.length)];
     
     setHiddenIndices(toHide);
-    setUserInput(currentWord.word.split('').map((char, i) => toHide.includes(i) ? "" : char.toUpperCase()));
+    setUserInput(cleanWord.split('').map((char, i) => toHide.includes(i) ? "" : char.toUpperCase()));
     setGameState("playing");
     setTimeout(focusInput, 100);
   };
@@ -214,7 +222,6 @@ function GameContent() {
     <div className="min-h-screen bg-background relative flex flex-col p-4 md:p-8" onClick={focusInput}>
       <div className="bg-animate" />
       
-      {/* Hidden input to trigger mobile keyboard */}
       <input 
         ref={hiddenInputRef} 
         type="text" 
@@ -248,7 +255,7 @@ function GameContent() {
                 <img src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word}/600/600`} alt={currentWord.word} className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 space-y-4 text-center md:text-left">
-                <h2 className="text-6xl md:text-8xl font-black text-primary uppercase sparkle-text">{currentWord.word}</h2>
+                <h2 className="text-4xl md:text-7xl lg:text-8xl font-black text-primary uppercase sparkle-text break-words">{currentWord.word}</h2>
                 <p className="text-lg md:text-2xl font-bold italic text-muted-foreground">"{currentWord.definition}"</p>
                 <div className="flex justify-center md:justify-start gap-4">
                   <Button size="lg" onClick={playAudio} className="rounded-full bg-accent text-white h-14 w-14 shadow-lg"><Volume2 className="h-8 w-8" /></Button>
@@ -262,34 +269,54 @@ function GameContent() {
         {gameState === "memorizing" && currentWord && (
           <div className="text-center space-y-12 animate-in zoom-in">
             <div className="relative">
-              <div className="bg-white p-10 md:p-20 rounded-[4rem] shadow-3xl border-8 border-primary/10">
-                <p className="text-7xl md:text-[10rem] font-black text-primary uppercase tracking-tighter sparkle-text">{currentWord.word}</p>
+              <div className="bg-white p-6 md:p-20 rounded-[4rem] shadow-3xl border-8 border-primary/10 max-w-[90vw] overflow-hidden">
+                <p className={cn(
+                  "font-black text-primary uppercase tracking-tighter sparkle-text break-all",
+                  currentWord.word.length > 8 ? "text-5xl md:text-7xl lg:text-9xl" : "text-7xl md:text-[10rem]"
+                )}>
+                  {currentWord.word}
+                </p>
               </div>
-              <div className="absolute -top-6 -right-6 bg-accent h-20 w-20 rounded-full border-4 border-white flex items-center justify-center text-white text-3xl font-black">{timer}</div>
+              <div className="absolute -top-4 -right-4 bg-accent h-16 w-16 md:h-20 md:w-20 rounded-full border-4 border-white flex items-center justify-center text-white text-2xl md:text-3xl font-black shadow-xl">{timer}</div>
             </div>
             <p className="text-xl font-bold text-muted-foreground">Look carefully! It's going to disappear!</p>
           </div>
         )}
 
         {gameState === "playing" && currentWord && (
-          <div className="w-full max-w-4xl space-y-12 text-center">
-            <div className="bg-white/70 p-6 md:p-16 rounded-[3rem] border-8 border-white shadow-3xl space-y-12">
+          <div className="w-full max-w-4xl space-y-8 text-center">
+            <div className="bg-white/70 p-6 md:p-12 rounded-[3rem] border-8 border-white shadow-3xl space-y-8">
                <div className="flex justify-center gap-4">
-                 <div className="h-20 w-20 relative rounded-2xl overflow-hidden border-4 border-white shadow-xl bg-muted">
+                 <div className="h-16 w-16 md:h-20 md:w-20 relative rounded-2xl overflow-hidden border-4 border-white shadow-xl bg-muted">
                    <img src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word}/200/200`} alt="hint" className="w-full h-full object-cover" />
                  </div>
-                 <Button onClick={playAudio} className="h-20 w-20 rounded-full bg-accent text-white shadow-xl"><Volume2 className="h-10 w-10" /></Button>
+                 <Button onClick={playAudio} className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-accent text-white shadow-xl"><Volume2 className="h-8 md:h-10 w-8 md:w-10" /></Button>
                </div>
-               <div className="flex flex-wrap justify-center gap-3">
+               
+               {/* Word Tiles Grid - Optimized for long words like rhinoceros */}
+               <div className="flex flex-wrap justify-center gap-2 md:gap-3 max-w-full">
                 {userInput.map((char, i) => (
-                  <div key={i} className={cn("scrabble-tile text-2xl md:text-5xl w-12 h-12 md:w-20 md:h-20", char === "" && "empty", isWrong && hiddenIndices.includes(i) && "error", !hiddenIndices.includes(i) && "opacity-50")}>{char}</div>
+                  <div 
+                    key={i} 
+                    className={cn(
+                      "scrabble-tile font-black uppercase transition-all duration-200 select-none",
+                      currentWord.word.length > 10 ? "w-8 h-8 md:w-14 md:h-14 text-lg md:text-3xl" : "w-12 h-12 md:w-20 md:h-20 text-2xl md:text-5xl",
+                      char === "" && "empty", 
+                      isWrong && hiddenIndices.includes(i) && "error", 
+                      !hiddenIndices.includes(i) && "opacity-50"
+                    )}
+                  >
+                    {char}
+                  </div>
                 ))}
               </div>
-              <div className="flex justify-center gap-4 pt-4">
-                <Button variant="outline" onClick={focusInput} className="rounded-full font-black border-2"><Keyboard className="mr-2" /> Keyboard</Button>
-                <Button variant="outline" onClick={handleBackspace} className="rounded-full font-black border-2">Delete</Button>
+
+              <div className="flex flex-wrap justify-center gap-4 pt-4">
+                <Button variant="outline" onClick={focusInput} className="rounded-full font-black border-2 h-12 px-6"><Keyboard className="mr-2" /> Keyboard</Button>
+                <Button variant="outline" onClick={handleBackspace} className="rounded-full font-black border-2 h-12 px-6">Delete</Button>
               </div>
             </div>
+            <p className="text-sm md:text-lg font-bold text-muted-foreground animate-pulse">Type the missing letters!</p>
           </div>
         )}
 
@@ -305,7 +332,7 @@ function GameContent() {
           <div className="text-center space-y-10">
             <div className="text-[10rem]">🏆</div>
             <h2 className="text-6xl font-black">CHAMPION!</h2>
-            <p className="text-2xl font-bold text-muted-foreground">You finished all the words in this list!</p>
+            <p className="text-2xl font-bold text-muted-foreground">You finished all {wordsToPlay.length} words in this list!</p>
             <Button onClick={() => router.push("/")} className="btn-bouncy px-12 py-8 text-3xl bg-primary text-white">Back to Lobby</Button>
           </div>
         )}

@@ -58,7 +58,12 @@ export function useGameStore() {
   }, [firebaseStats]);
 
   const allWords = useMemo(() => {
-    return firebaseWords || DEFAULT_WORDS;
+    // Ensure words are trimmed and cleaned for consistent display
+    return (firebaseWords || DEFAULT_WORDS).map(w => ({
+      ...w,
+      word: w.word?.trim() || "",
+      definition: w.definition?.trim() || ""
+    }));
   }, [firebaseWords]);
 
   const updateStats = useCallback((updates: Partial<UserStats>) => {
@@ -81,7 +86,13 @@ export function useGameStore() {
   const addCustomWord = useCallback((wordData: Omit<WordItem, 'id' | 'userId'>) => {
     if (!db || !user?.uid) return;
     const wordRef = collection(db, 'words');
-    const data = { ...wordData, userId: user.uid };
+    // Sanitize input word by trimming and converting to uppercase for the database
+    const sanitizedWord = wordData.word.trim().toUpperCase();
+    const data = { 
+      ...wordData, 
+      word: sanitizedWord,
+      userId: user.uid 
+    };
     
     addDoc(wordRef, data)
       .catch(async (error) => {

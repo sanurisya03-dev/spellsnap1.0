@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -60,35 +61,49 @@ export function useGameStore() {
     return firebaseWords || DEFAULT_WORDS;
   }, [firebaseWords]);
 
-  const updateStats = useCallback(async (updates: Partial<UserStats>) => {
+  const updateStats = useCallback((updates: Partial<UserStats>) => {
     if (!statsRef || !db || !user?.uid) return;
     
-    try {
-      await setDoc(statsRef, updates, { merge: true });
-    } catch (err: any) {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: statsRef.path,
-        operation: 'update',
-        requestResourceData: updates
-      } satisfies SecurityRuleContext));
-    }
+    setDoc(statsRef, updates, { merge: true })
+      .catch(async (error) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: statsRef.path,
+          operation: 'update',
+          requestResourceData: updates
+        } satisfies SecurityRuleContext));
+      });
   }, [statsRef, user, db]);
 
   const addStars = useCallback((amount: number) => updateStats({ stars: increment(amount) }), [updateStats]);
   const addCorrectLetter = useCallback(() => updateStats({ correctLetters: increment(1) }), [updateStats]);
   const addWordMastered = useCallback(() => updateStats({ wordsMastered: increment(1) }), [updateStats]);
 
-  const addCustomWord = useCallback(async (wordData: Omit<WordItem, 'id' | 'userId'>) => {
+  const addCustomWord = useCallback((wordData: Omit<WordItem, 'id' | 'userId'>) => {
     if (!db || !user?.uid) return;
     const wordRef = collection(db, 'words');
     const data = { ...wordData, userId: user.uid };
-    await addDoc(wordRef, data);
+    
+    addDoc(wordRef, data)
+      .catch(async (error) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: wordRef.path,
+          operation: 'create',
+          requestResourceData: data
+        } satisfies SecurityRuleContext));
+      });
   }, [db, user?.uid]);
 
-  const deleteCustomWord = useCallback(async (wordId: string) => {
+  const deleteCustomWord = useCallback((wordId: string) => {
     if (!db) return;
     const wordRef = doc(db, 'words', wordId);
-    await deleteDoc(wordRef);
+    
+    deleteDoc(wordRef)
+      .catch(async (error) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: wordRef.path,
+          operation: 'delete'
+        } satisfies SecurityRuleContext));
+      });
   }, [db]);
 
   const isLoaded = !userLoading;

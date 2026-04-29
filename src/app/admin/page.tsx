@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -64,24 +65,21 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleAddWord = async () => {
+  const handleAddWord = () => {
     if (!newWord.word || !newWord.definition) {
       toast({ variant: "destructive", title: "Wait!", description: "A word needs a name and a definition!" });
       return;
     }
     
+    // Optimistic UI: Close immediately and reset form
     setIsSaving(true);
-    try {
-      await addCustomWord(newWord);
-      setNewWord({ word: "", definition: "", exampleSentence: "", theme: "", imageUrl: "", phonemes: "", audioUrl: "", difficulty: "beginner" });
-      setIsDialogOpen(false);
-      toast({ title: "Word Saved! ✨", description: `${newWord.word} has been added to the bank.` });
-    } catch (error: any) {
-      console.error(error);
-      toast({ variant: "destructive", title: "Save Error", description: "Something went wrong while saving." });
-    } finally {
-      setIsSaving(false);
-    }
+    addCustomWord(newWord);
+    
+    setNewWord({ word: "", definition: "", exampleSentence: "", theme: "", imageUrl: "", phonemes: "", audioUrl: "", difficulty: "beginner" });
+    setIsDialogOpen(false);
+    setIsSaving(false);
+    
+    toast({ title: "Word Saved! ✨", description: `${newWord.word} has been added to the bank.` });
   };
 
   const handleAIGenerateImage = async () => {
@@ -142,15 +140,11 @@ export default function AdminDashboard() {
     w.theme?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDelete = async (e: React.MouseEvent, id: string, word: string) => {
+  const handleDelete = (e: React.MouseEvent, id: string, word: string) => {
     e.stopPropagation();
     if (confirm(`Are you sure you want to delete "${word}"?`)) {
-      try {
-        await deleteCustomWord(id);
-        toast({ title: "Deleted", description: `"${word}" has been removed.`, variant: "destructive" });
-      } catch (err) {
-        toast({ title: "Error", description: "Failed to delete word.", variant: "destructive" });
-      }
+      deleteCustomWord(id);
+      toast({ title: "Deleted", description: `"${word}" has been removed.`, variant: "destructive" });
     }
   };
 

@@ -28,7 +28,7 @@ function GameContent() {
   const [hiddenIndices, setHiddenIndices] = useState<number[]>([]);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize words to play: Select ALL words of the chosen difficulty
+  // Initialize words to play: Include ALL words regardless of their assigned difficulty
   useEffect(() => {
     if (!isLoaded || wordsToPlay.length > 0) return;
     
@@ -37,17 +37,10 @@ function GameContent() {
       return;
     }
 
-    let filtered = playableWords.filter(w => w.difficulty === difficulty);
-    
-    // Fallback: if no words for this specific difficulty, show all words
-    if (filtered.length === 0) {
-        filtered = playableWords;
-    }
-
-    // Shuffle ALL available words
-    const shuffled = [...filtered].sort(() => 0.5 - Math.random());
+    // Shuffle ALL available words from the bank
+    const shuffled = [...playableWords].sort(() => 0.5 - Math.random());
     setWordsToPlay(shuffled);
-  }, [playableWords, difficulty, isLoaded, wordsToPlay.length]);
+  }, [playableWords, isLoaded, wordsToPlay.length]);
 
   const currentWord = useMemo(() => {
     if (!wordsToPlay[currentWordIndex]) return null;
@@ -125,6 +118,7 @@ function GameContent() {
     const indices = Array.from({ length: cleanWord.length }, (_, i) => i);
     let toHide: number[] = [];
     
+    // Difficulty logic based on the mode selected by the student
     if (difficulty === "advanced") {
       // For advanced, hide EVERY letter
       toHide = indices;

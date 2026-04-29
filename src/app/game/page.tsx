@@ -28,6 +28,7 @@ function GameContent() {
   const [hiddenIndices, setHiddenIndices] = useState<number[]>([]);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
 
+  // Initialize words to play: Select ALL words of the chosen difficulty
   useEffect(() => {
     if (!isLoaded || wordsToPlay.length > 0) return;
     
@@ -37,9 +38,14 @@ function GameContent() {
     }
 
     let filtered = playableWords.filter(w => w.difficulty === difficulty);
-    if (filtered.length === 0) filtered = playableWords;
+    
+    // Fallback: if no words for this specific difficulty, show all words
+    if (filtered.length === 0) {
+        filtered = playableWords;
+    }
 
-    const shuffled = [...filtered].sort(() => 0.5 - Math.random()).slice(0, 5);
+    // Shuffle the available words
+    const shuffled = [...filtered].sort(() => 0.5 - Math.random());
     setWordsToPlay(shuffled);
   }, [playableWords, difficulty, isLoaded, wordsToPlay.length]);
 
@@ -68,6 +74,10 @@ function GameContent() {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text.toLowerCase());
       utterance.rate = 0.8;
+      // Set to British voice if available
+      const voices = window.speechSynthesis.getVoices();
+      const ukVoice = voices.find(v => v.lang.includes('GB'));
+      if (ukVoice) utterance.voice = ukVoice;
       window.speechSynthesis.speak(utterance);
     }
   }, []);
@@ -112,6 +122,9 @@ function GameContent() {
     else if (difficulty === "intermediate") toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, Math.ceil(currentWord.word.length / 2));
     else toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, Math.min(currentWord.word.length - 1, 2));
     
+    // Ensure at least one letter is hidden
+    if (toHide.length === 0) toHide = [Math.floor(Math.random() * currentWord.word.length)];
+    
     setHiddenIndices(toHide);
     setUserInput(currentWord.word.split('').map((char, i) => toHide.includes(i) ? "" : char.toUpperCase()));
     setGameState("playing");
@@ -152,6 +165,7 @@ function GameContent() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (gameState !== "playing") return;
       if (e.key === "Backspace") {
         e.preventDefault();
         handleBackspace();
@@ -159,7 +173,7 @@ function GameContent() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleBackspace]);
+  }, [handleBackspace, gameState]);
 
   useEffect(() => {
     if (gameState === "playing" && currentWord && !userInput.includes("")) {
@@ -190,7 +204,7 @@ function GameContent() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-8 text-center space-y-6">
         <BookOpen className="h-24 w-24 text-primary opacity-20" />
         <h2 className="text-4xl font-black">No words found!</h2>
-        <p className="text-xl font-bold text-muted-foreground">Ask a teacher to add some words to the Explorer bank.</p>
+        <p className="text-xl font-bold text-muted-foreground">Ask a teacher to add some words to the Word Explorer.</p>
         <Button onClick={() => router.push("/")} className="btn-bouncy bg-primary text-white h-16 px-12 text-xl">Go Home</Button>
       </div>
     );
@@ -200,6 +214,7 @@ function GameContent() {
     <div className="min-h-screen bg-background relative flex flex-col p-4 md:p-8" onClick={focusInput}>
       <div className="bg-animate" />
       
+      {/* Hidden input to trigger mobile keyboard */}
       <input 
         ref={hiddenInputRef} 
         type="text" 
@@ -218,10 +233,10 @@ function GameContent() {
           <ArrowLeft className="mr-2" /> Stop
         </Button>
         <div className="flex-1 max-w-[400px]">
-          <Progress value={((currentWordIndex + 1) / wordsToPlay.length) * 100} className="h-3 md:h-6 bg-white border-2 border-primary/20 rounded-full" />
+          <Progress value={((currentWordIndex) / wordsToPlay.length) * 100} className="h-3 md:h-6 bg-white border-2 border-primary/20 rounded-full" />
         </div>
         <div className="bg-primary text-white font-black px-4 py-1.5 rounded-full shadow-xl border-2 border-white text-[10px] md:text-lg">
-          {difficulty.toUpperCase()}
+          {difficulty.toUpperCase()} ({currentWordIndex + 1}/{wordsToPlay.length})
         </div>
       </header>
 
@@ -290,6 +305,7 @@ function GameContent() {
           <div className="text-center space-y-10">
             <div className="text-[10rem]">🏆</div>
             <h2 className="text-6xl font-black">CHAMPION!</h2>
+            <p className="text-2xl font-bold text-muted-foreground">You finished all the words in this list!</p>
             <Button onClick={() => router.push("/")} className="btn-bouncy px-12 py-8 text-3xl bg-primary text-white">Back to Lobby</Button>
           </div>
         )}

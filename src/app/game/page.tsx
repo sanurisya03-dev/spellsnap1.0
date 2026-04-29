@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
@@ -28,7 +29,6 @@ function GameContent() {
   const [hiddenIndices, setHiddenIndices] = useState<number[]>([]);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize words to play: Include ALL words regardless of their assigned difficulty
   useEffect(() => {
     if (!isLoaded || wordsToPlay.length > 0) return;
     
@@ -37,7 +37,7 @@ function GameContent() {
       return;
     }
 
-    // Shuffle ALL available words from the bank
+    // Shuffle ALL assigned words for the activity session
     const shuffled = [...playableWords].sort(() => 0.5 - Math.random());
     setWordsToPlay(shuffled);
   }, [playableWords, isLoaded, wordsToPlay.length]);
@@ -46,7 +46,7 @@ function GameContent() {
     if (!wordsToPlay[currentWordIndex]) return null;
     return {
       ...wordsToPlay[currentWordIndex],
-      word: wordsToPlay[currentWordIndex].word.trim()
+      word: wordsToPlay[currentWordIndex].word.trim().toUpperCase()
     };
   }, [wordsToPlay, currentWordIndex]);
 
@@ -114,24 +114,25 @@ function GameContent() {
 
   const startSpellingChallenge = () => {
     if (!currentWord) return;
-    const cleanWord = currentWord.word.trim();
+    const cleanWord = currentWord.word;
     const indices = Array.from({ length: cleanWord.length }, (_, i) => i);
     let toHide: number[] = [];
     
-    // Difficulty logic based on the mode selected by the student
+    // Level-specific logic for hiding letters
     if (difficulty === "advanced") {
-      // For advanced, hide EVERY letter
+      // Wizard Mode: Hide ALL letters
       toHide = indices;
     } else if (difficulty === "intermediate") {
-      // For intermediate, hide 3-4 letters
-      const count = Math.min(cleanWord.length, Math.floor(Math.random() * 2) + 3); // random 3 or 4
+      // Explorer Mode: Hide 3-4 letters
+      const count = Math.min(cleanWord.length, Math.floor(Math.random() * 2) + 3);
       toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, count);
     } else {
-      // For beginner, hide 1-2 letters
-      toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, Math.min(cleanWord.length - 1, 2));
+      // Beginner Mode: Hide 1-2 letters
+      const count = Math.min(cleanWord.length - 1, Math.floor(Math.random() * 2) + 1);
+      toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, count);
     }
     
-    // Ensure at least one letter is hidden regardless of settings
+    // Safety check: always hide at least one letter
     if (toHide.length === 0 && cleanWord.length > 0) {
       toHide = [Math.floor(Math.random() * cleanWord.length)];
     }
@@ -245,8 +246,8 @@ function GameContent() {
         <div className="flex-1 max-w-[400px]">
           <Progress value={((currentWordIndex) / wordsToPlay.length) * 100} className="h-3 md:h-6 bg-white border-2 border-primary/20 rounded-full" />
         </div>
-        <div className="bg-primary text-white font-black px-4 py-1.5 rounded-full shadow-xl border-2 border-white text-[10px] md:text-lg">
-          {difficulty.toUpperCase()} ({currentWordIndex + 1}/{wordsToPlay.length})
+        <div className="bg-primary text-white font-black px-4 py-1.5 rounded-full shadow-xl border-2 border-white text-[10px] md:text-lg uppercase">
+          {difficulty} Mode ({currentWordIndex + 1}/{wordsToPlay.length})
         </div>
       </header>
 
@@ -258,7 +259,7 @@ function GameContent() {
                 <img src={currentWord.imageUrl || `https://picsum.photos/seed/${currentWord.word}/600/600`} alt={currentWord.word} className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 space-y-4 text-center md:text-left">
-                <h2 className="text-4xl md:text-7xl lg:text-8xl font-black text-primary uppercase sparkle-text break-words">{currentWord.word}</h2>
+                <h2 className="text-4xl md:text-7xl lg:text-8xl font-black text-primary uppercase sparkle-text break-words leading-none">{currentWord.word}</h2>
                 <p className="text-lg md:text-2xl font-bold italic text-muted-foreground">"{currentWord.definition}"</p>
                 <div className="flex justify-center md:justify-start gap-4">
                   <Button size="lg" onClick={playAudio} className="rounded-full bg-accent text-white h-14 w-14 shadow-lg"><Volume2 className="h-8 w-8" /></Button>

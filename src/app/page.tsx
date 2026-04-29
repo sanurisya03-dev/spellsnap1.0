@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -116,13 +117,21 @@ export default function LobbyPage() {
               </div>
               <div>
                 <h3 className="text-4xl font-black text-accent uppercase">Student</h3>
-                <p className="text-lg font-bold text-muted-foreground mt-2">Sign in to track your stars and master spelling!</p>
+                <p className="text-lg font-bold text-muted-foreground mt-2">Choose your level and start mastering spelling!</p>
               </div>
-              <div className="w-full space-y-4">
+              <div className="w-full space-y-3">
                 {user ? (
-                   <Link href="/game" className="block w-full">
-                    <Button className="btn-bouncy bg-accent text-white h-16 px-12 text-xl w-full">START PLAYING!</Button>
-                  </Link>
+                   <div className="grid grid-cols-1 gap-3">
+                    <Link href="/game?difficulty=beginner" className="w-full">
+                      <Button className="btn-bouncy bg-accent text-white h-14 text-lg w-full">BEGINNER MODE</Button>
+                    </Link>
+                    <Link href="/game?difficulty=intermediate" className="w-full">
+                      <Button className="btn-bouncy bg-secondary text-white h-14 text-lg w-full">EXPLORER MODE</Button>
+                    </Link>
+                    <Link href="/game?difficulty=advanced" className="w-full">
+                      <Button className="btn-bouncy bg-primary text-white h-14 text-lg w-full">WIZARD MODE</Button>
+                    </Link>
+                  </div>
                 ) : (
                   <Button onClick={handleSignIn} className="btn-bouncy bg-accent text-white h-16 px-12 text-xl w-full">SIGN IN TO PLAY</Button>
                 )}
@@ -154,11 +163,23 @@ export default function LobbyPage() {
 
         <section className="pt-8">
           <h4 className="text-center font-black text-sm uppercase tracking-[0.3em] text-muted-foreground mb-8">Quick Access</h4>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
              <Link href="/game?difficulty=beginner" className="block">
                 <Button variant="outline" className="w-full h-24 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg p-2 group">
                    <Rocket className="h-6 w-6 text-primary group-hover:scale-125 transition-transform" />
                    <span className="text-[10px] font-black uppercase text-primary">Beginner</span>
+                </Button>
+             </Link>
+             <Link href="/game?difficulty=intermediate" className="block">
+                <Button variant="outline" className="w-full h-24 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg p-2 group">
+                   <Sparkles className="h-6 w-6 text-secondary group-hover:scale-125 transition-transform" />
+                   <span className="text-[10px] font-black uppercase text-secondary">Explorer</span>
+                </Button>
+             </Link>
+             <Link href="/game?difficulty=advanced" className="block">
+                <Button variant="outline" className="w-full h-24 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg p-2 group">
+                   <GraduationCap className="h-6 w-6 text-accent group-hover:scale-125 transition-transform" />
+                   <span className="text-[10px] font-black uppercase text-accent">Wizard</span>
                 </Button>
              </Link>
              <Link href="/stats" className="block">
@@ -171,12 +192,6 @@ export default function LobbyPage() {
                 <Button variant="outline" className="w-full h-24 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg p-2 group">
                    <BookOpen className="h-6 w-6 text-primary group-hover:scale-125 transition-transform" />
                    <span className="text-[10px] font-black uppercase text-primary">Word Bank</span>
-                </Button>
-             </Link>
-             <Link href="/admin/generator" className="block">
-                <Button variant="outline" className="w-full h-24 rounded-[2rem] border-4 border-white bg-white/70 hover:bg-white flex flex-col gap-2 transition-all shadow-lg p-2 group">
-                   <Sparkles className="h-6 w-6 text-yellow-500 group-hover:scale-125 transition-transform" />
-                   <span className="text-[10px] font-black uppercase text-yellow-600">AI Magic</span>
                 </Button>
              </Link>
           </div>

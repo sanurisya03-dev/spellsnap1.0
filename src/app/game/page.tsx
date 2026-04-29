@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
@@ -45,14 +44,13 @@ function GameContent() {
         filtered = playableWords;
     }
 
-    // Shuffle ALL available words - ensure no slicing occurs here
+    // Shuffle ALL available words
     const shuffled = [...filtered].sort(() => 0.5 - Math.random());
     setWordsToPlay(shuffled);
   }, [playableWords, difficulty, isLoaded, wordsToPlay.length]);
 
   const currentWord = useMemo(() => {
     if (!wordsToPlay[currentWordIndex]) return null;
-    // Strictly trim the word to ensure blank counts are 100% accurate
     return {
       ...wordsToPlay[currentWordIndex],
       word: wordsToPlay[currentWordIndex].word.trim()
@@ -127,11 +125,22 @@ function GameContent() {
     const indices = Array.from({ length: cleanWord.length }, (_, i) => i);
     let toHide: number[] = [];
     
-    if (difficulty === "advanced") toHide = indices;
-    else if (difficulty === "intermediate") toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, Math.ceil(cleanWord.length / 2));
-    else toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, Math.min(cleanWord.length - 1, 2));
+    if (difficulty === "advanced") {
+      // For advanced, hide EVERY letter
+      toHide = indices;
+    } else if (difficulty === "intermediate") {
+      // For intermediate, hide 3-4 letters
+      const count = Math.min(cleanWord.length, Math.floor(Math.random() * 2) + 3); // random 3 or 4
+      toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, count);
+    } else {
+      // For beginner, hide 1-2 letters
+      toHide = [...indices].sort(() => 0.5 - Math.random()).slice(0, Math.min(cleanWord.length - 1, 2));
+    }
     
-    if (toHide.length === 0) toHide = [Math.floor(Math.random() * cleanWord.length)];
+    // Ensure at least one letter is hidden regardless of settings
+    if (toHide.length === 0 && cleanWord.length > 0) {
+      toHide = [Math.floor(Math.random() * cleanWord.length)];
+    }
     
     setHiddenIndices(toHide);
     setUserInput(cleanWord.split('').map((char, i) => toHide.includes(i) ? "" : char.toUpperCase()));
@@ -293,7 +302,6 @@ function GameContent() {
                  <Button onClick={playAudio} className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-accent text-white shadow-xl"><Volume2 className="h-8 md:h-10 w-8 md:w-10" /></Button>
                </div>
                
-               {/* Word Tiles Grid - Optimized for long words like rhinoceros */}
                <div className="flex flex-wrap justify-center gap-2 md:gap-3 max-w-full">
                 {userInput.map((char, i) => (
                   <div 
